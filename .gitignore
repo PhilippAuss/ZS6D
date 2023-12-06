@@ -1,0 +1,6 @@
+dbg_imgs/*
+results/*
+templates/*
+__pycache__/
+.vscode/
+bop_toolkit/*
