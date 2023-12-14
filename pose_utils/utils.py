@@ -35,15 +35,54 @@ def find_template(desc_input, desc_templates, num_results):
 
 
 
-def find_template_cpu(desc_input, desc_templates, num_results):
+# def find_template_cpu(desc_input, desc_templates, num_results):
 
-    similarities = [(1-cosine(desc_input.squeeze().numpy().flatten(), desc_template.squeeze().numpy().flatten()), i) 
-                    for i, desc_template in enumerate(desc_templates)] 
-                    # if desc_input.shape==desc_template.shape]
+#     similarities = [(1-cosine(desc_input.squeeze().numpy().flatten(), desc_template.squeeze().numpy().flatten()), i) 
+#                     for i, desc_template in enumerate(desc_templates)] 
+#                     # if desc_input.shape==desc_template.shape]
     
-    sorted_sims = sorted(similarities, key=lambda x:x[0], reverse=True)
+#     sorted_sims = sorted(similarities, key=lambda x:x[0], reverse=True)
     
-    return [(sim[0],sim[1]) for sim in sorted_sims[:num_results]]
+#     return [(sim[0],sim[1]) for sim in sorted_sims[:num_results]]
+
+
+def find_template_cpu(desc_input, desc_templates, num_results):
+    # Flatten and normalize the desc_input
+    desc_input_flat = desc_input.ravel()
+    desc_input_norm = np.linalg.norm(desc_input_flat)
+
+    # Precompute flattening and norms for all templates
+    templates_flat = [template.ravel() for template in desc_templates]
+    templates_norm = [np.linalg.norm(template_flat) for template_flat in templates_flat]
+
+    # Compute cosine similarities in a vectorized manner
+    similarities = [(np.dot(desc_input_flat, template_flat) / (desc_input_norm * template_norm), i)
+                    for i, (template_flat, template_norm) in enumerate(zip(templates_flat, templates_norm))]
+
+    # Sort the results
+    sorted_sims = sorted(similarities, key=lambda x: x[0], reverse=True)
+
+    # Return the top num_results
+    return sorted_sims[:num_results]
+
+
+def find_template_cpu_matrix(desc_input, desc_templates, num_results):
+    # Flatten and normalize the desc_input
+    desc_input_flat = desc_input.ravel()
+    desc_input_norm = np.linalg.norm(desc_input_flat)
+
+    # Convert list of templates to a 3D NumPy array and flatten along the last two dimensions
+    templates_array = np.array(desc_templates).reshape(len(desc_templates), -1)
+    templates_norms = np.linalg.norm(templates_array, axis=1)
+
+    # Compute cosine similarities using matrix operations
+    similarities = np.dot(templates_array, desc_input_flat) / (templates_norms * desc_input_norm)
+
+    # Get the indices of the top num_results similarities
+    top_indices = np.argsort(similarities)[-num_results:][::-1]
+
+    # Return the top similarities and their indices
+    return [(similarities[i], i) for i in top_indices]
 
 
 def preprocess(img: Image.Image, 

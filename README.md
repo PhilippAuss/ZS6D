@@ -1,9 +1,9 @@
 # ZS6D
-[[paper](https://arxiv.org/pdf/2309.11986.pdf)]
-We demonstrate the effectiveness of deep features extracted from self-supervised, pre-trained Vision Transformer (ViT) for Zero-shot 6D pose estimation. 
+
 ![teaser](./assets/overview.png)
 
- 
+[[paper](https://arxiv.org/pdf/2309.11986.pdf)]
+We demonstrate the effectiveness of deep features extracted from self-supervised, pre-trained Vision Transformer (ViT) for Zero-shot 6D pose estimation.
 
 ![pipeline](./assets/ZS6D_pipeline.png)
 

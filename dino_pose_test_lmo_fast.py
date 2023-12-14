@@ -4,7 +4,7 @@ import json
 import torch
 from tqdm import tqdm
 import numpy as np
-from pose_extractor import PoseViTExtractor
+from pose_extractor_fast import PoseViTExtractor
 from extractor import ViTExtractor
 import copy
 from pose_utils.data_utils import ImageContainer_masks
@@ -172,7 +172,7 @@ if __name__=="__main__":
                     img_data.x_offsets.append(None)
                     img_data.masks.append(None)
 
-        
+        templates = []
         for i in range(len(img_data.crops)):
             
             object_id = img_data.obj_ids[i]
@@ -190,113 +190,119 @@ if __name__=="__main__":
                 for matched_template in matched_templates:
 
                     template = Image.open(templates_gt_subset[img_data.obj_names[i]][matched_template[1]]['img_crop'])
-
-
-                    try:
-                        with torch.no_grad():
-                            start_time_fc = time.time()
-                            points1, points2, crop_pil, template_pil = extractor.find_correspondences(img_data.crops[i], 
-                                                                                                        template, 
-                                                                                                        num_pairs=config['num_correspondences'],
-                                                                                                        load_size=img_data.crops[i].size[0])
-                            
-                            end_time_fc = time.time()
-                            elapsed_time_fc = end_time_fc - start_time_fc
-                         
-
-                        start_time_pose = time.time()
-                        img_uv = np.load(f"{templates_gt_subset[img_data.obj_names[i]][matched_template[1]]['img_crop'].split('.png')[0]}_uv.npy")
-                        
-                        img_uv = img_uv.astype(np.uint8)
-
-                        img_uv = cv2.resize(img_uv, img_data.crops[i].size)
-
-                        R_est, t_est = utils.get_pose_from_correspondences(points1,
-                                                                        points2,
-                                                                        img_data.y_offsets[i],
-                                                                        img_data.x_offsets[i],
-                                                                        img_uv,
-                                                                        img_data.cam_K,
-                                                                        norm_factors[str(img_data.obj_ids[i])],
-                                                                        config['scale_factor'])
-                        end_time_pose = time.time()
-                        elapsed_time_pose = end_time_pose - start_time_pose
-                        
-                    except:
-                        print("Something went wrong during find_correspondences!")
-                        print(i)
-                        R_est = None
+                    templates.append(template)
+                    
+                    
+                    
+                    
                     
 
-                    if R_est is None:
-                        print(f"Not enough feasible correspondences where found for {img_data.obj_ids[i]}")
-                        R_est = np.array(templates_gt_subset[img_data.obj_names[i]][matched_template[1]]['cam_R_m2c']).reshape((3,3))
-                        t_est = np.array([0.,0.,0.])
 
-                    end_time = time.time()
-
-                    if img_data.obj_ids[i] == "eggbox" or img_data.obj_ids[i] == "glue":
-                        err, acc = eval_utils.calculate_score(R_est, img_data.R_gts[i], int(img_data.obj_ids[i]), 0)
-                    else:
-                        err, acc = eval_utils.calculate_score(R_est, img_data.R_gts[i], int(img_data.obj_ids[i]), 0)
-
-                    if err < min_err:
-                        min_err = err
-                        R_best = R_est
-                        t_best = t_est
-                        elapsed_time = end_time-start_time
-                        pose_est = True
+        with torch.no_grad():
+            start_time_fc = time.time()
+            points1, points2, crop_pil, template_pil = extractor.find_correspondences_batch(img_data.crops, 
+                                                                                            templates, 
+                                                                                            num_pairs=config['num_correspondences'],
+                                                                                            load_size=img_data.crops[i].size[0])
+            
+            end_time_fc = time.time()
+            elapsed_time_fc = end_time_fc - start_time_fc
+            print(elapsed_time_fc)
                 
-                if not pose_est:
-                    R_best = np.array([[1.0,0.,0.],
-                                    [0.,1.0,0.],
-                                    [0.,0.,1.0]])
-                    
-                    t_best = np.array([0.,0.,0.])
-                    print("No Pose could be determined")
-                    score = 0.
-                else:
-                    score = 1.0
-            
-            else:
-                R_best = np.array([[1.0,0.,0.],
-                [0.,1.0,0.],
-                [0.,0.,1.0]])
-                    
-                t_best = np.array([0.,0.,0.])
-                print("No Pose could be determined")
-                score = 0.
 
-                
-                
-            # Prepare for writing:
-            R_best_str = " ".join(map(str, R_best.flatten()))
-            t_best_str = " ".join(map(str, t_best * 1000))
-            elapsed_time = -1
+#             start_time_pose = time.time()
+#             img_uv = np.load(f"{templates_gt_subset[img_data.obj_names[i]][matched_template[1]]['img_crop'].split('.png')[0]}_uv.npy")
             
-            # Write the detections to the CSV file
+#             img_uv = img_uv.astype(np.uint8)
+
+#             img_uv = cv2.resize(img_uv, img_data.crops[i].size)
+
+#             R_est, t_est = utils.get_pose_from_correspondences(points1,
+#                                                             points2,
+#                                                             img_data.y_offsets[i],
+#                                                             img_data.x_offsets[i],
+#                                                             img_uv,
+#                                                             img_data.cam_K,
+#                                                             norm_factors[str(img_data.obj_ids[i])],
+#                                                             config['scale_factor'])
+#             end_time_pose = time.time()
+#             elapsed_time_pose = end_time_pose - start_time_pose
             
-            print(f"match_time: {elapsed_time_match}, corr_time: {elapsed_time_fc}, pose_time: {elapsed_time_pose}")
-            
-            # ['scene_id', 'im_id', 'obj_id', 'score', 'R', 't', 'time']
-            with open(csv_file, mode='a', newline='') as csvfile:
-                csv_writer = csv.writer(csvfile)
-                csv_writer.writerow([img_data.scene_id, img_data.img_name, object_id, score, R_best_str, t_best_str, elapsed_time])
+#         except:
+#             print("Something went wrong during find_correspondences!")
+#             print(i)
+#             R_est = None
+        
+
+#         if R_est is None:
+#             print(f"Not enough feasible correspondences where found for {img_data.obj_ids[i]}")
+#             R_est = np.array(templates_gt_subset[img_data.obj_names[i]][matched_template[1]]['cam_R_m2c']).reshape((3,3))
+#             t_est = np.array([0.,0.,0.])
+
+#         end_time = time.time()
+
+#         if img_data.obj_ids[i] == "eggbox" or img_data.obj_ids[i] == "glue":
+#             err, acc = eval_utils.calculate_score(R_est, img_data.R_gts[i], int(img_data.obj_ids[i]), 0)
+#         else:
+#             err, acc = eval_utils.calculate_score(R_est, img_data.R_gts[i], int(img_data.obj_ids[i]), 0)
+
+#         if err < min_err:
+#             min_err = err
+#             R_best = R_est
+#             t_best = t_est
+#             elapsed_time = end_time-start_time
+#             pose_est = True
+    
+#     if not pose_est:
+#         R_best = np.array([[1.0,0.,0.],
+#                         [0.,1.0,0.],
+#                         [0.,0.,1.0]])
+        
+#         t_best = np.array([0.,0.,0.])
+#         print("No Pose could be determined")
+#         score = 0.
+#     else:
+#         score = 1.0
+
+# else:
+#     R_best = np.array([[1.0,0.,0.],
+#     [0.,1.0,0.],
+#     [0.,0.,1.0]])
+        
+#     t_best = np.array([0.,0.,0.])
+#     print("No Pose could be determined")
+#     score = 0.
+
+    
+    
+# # Prepare for writing:
+# R_best_str = " ".join(map(str, R_best.flatten()))
+# t_best_str = " ".join(map(str, t_best * 1000))
+# elapsed_time = -1
+
+# # Write the detections to the CSV file
+
+# print(f"match_time: {elapsed_time_match}, corr_time: {elapsed_time_fc}, pose_time: {elapsed_time_pose}")
+
+# # ['scene_id', 'im_id', 'obj_id', 'score', 'R', 't', 'time']
+# with open(csv_file, mode='a', newline='') as csvfile:
+#     csv_writer = csv.writer(csvfile)
+#     csv_writer.writerow([img_data.scene_id, img_data.img_name, object_id, score, R_best_str, t_best_str, elapsed_time])
 
 
-            if config['debug_imgs']:
-                if int(img_id) % config['debug_imgs'] == 0:
-                    dbg_img = vis_utils.create_debug_image(R_best, t_best, img_data.R_gts[i], img_data.t_gts[i], np.asarray(img_data.img),
-                                        img_data.cam_K, img_data.model_infos[i],
-                                        config['scale_factor'])
-                    
-                    dbg_img = cv2.cvtColor(dbg_img, cv2.COLOR_BGR2RGB)
-                    if img_data.masks[i] is not None:
-                        dbg_img_mask = cv2.hconcat([dbg_img, img_data.masks[i]]) 
-                    else:
-                        dbg_img_mask = dbg_img   
-                        
-                    cv2.imwrite(f"./dbg_imgs/{config['results_file']}/{img_data.img_name}_{img_data.obj_ids[i]}.png", dbg_img_mask)
+# if config['debug_imgs']:
+#     if int(img_id) % config['debug_imgs'] == 0:
+#         dbg_img = vis_utils.create_debug_image(R_best, t_best, img_data.R_gts[i], img_data.t_gts[i], np.asarray(img_data.img),
+#                             img_data.cam_K, img_data.model_infos[i],
+#                             config['scale_factor'])
+        
+#         dbg_img = cv2.cvtColor(dbg_img, cv2.COLOR_BGR2RGB)
+#         if img_data.masks[i] is not None:
+#             dbg_img_mask = cv2.hconcat([dbg_img, img_data.masks[i]]) 
+#         else:
+#             dbg_img_mask = dbg_img   
             
+#         cv2.imwrite(f"./dbg_imgs/{config['results_file']}/{img_data.img_name}_{img_data.obj_ids[i]}.png", dbg_img_mask)
+
 
                 

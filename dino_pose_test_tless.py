@@ -81,12 +81,6 @@ if __name__=="__main__":
         
         templates_gt_new[obj_id] = [template_label for i, template_label in enumerate(template_labels) if i%2==0]
         
-    #     tmpdic_per_obj[obj_name] = []
-    
-    # results_dic = {"acc": tmpdic_per_obj,
-    #                "R_err": copy.deepcopy(tmpdic_per_obj),
-    #                "t_err": copy.deepcopy(tmpdic_per_obj)
-    #                }
     
     print("Preparing templates and loading of extractor is done!")
     
