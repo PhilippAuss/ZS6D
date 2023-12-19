@@ -5,7 +5,7 @@ import torch
 from tqdm import tqdm
 import numpy as np
 from pose_extractor_fast import PoseViTExtractor
-from extractor import ViTExtractor
+# from extractor import ViTExtractor
 import copy
 from pose_utils.data_utils import ImageContainer_masks
 import pose_utils.img_utils as img_utils

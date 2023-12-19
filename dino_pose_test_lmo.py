@@ -195,7 +195,7 @@ if __name__=="__main__":
                     try:
                         with torch.no_grad():
                             start_time_fc = time.time()
-                            points1, points2, crop_pil, template_pil = extractor.find_correspondences(img_data.crops[i], 
+                            points1, points2, crop_pil, template_pil = extractor.find_correspondences_fastknn(img_data.crops[i], 
                                                                                                         template, 
                                                                                                         num_pairs=config['num_correspondences'],
                                                                                                         load_size=img_data.crops[i].size[0])
@@ -276,7 +276,7 @@ if __name__=="__main__":
             
             # Write the detections to the CSV file
             
-            print(f"match_time: {elapsed_time_match}, corr_time: {elapsed_time_fc}, pose_time: {elapsed_time_pose}")
+            # print(f"match_time: {elapsed_time_match}, corr_time: {elapsed_time_fc}, pose_time: {elapsed_time_pose}")
             
             # ['scene_id', 'im_id', 'obj_id', 'score', 'R', 't', 'time']
             with open(csv_file, mode='a', newline='') as csvfile:
