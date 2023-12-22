@@ -8,6 +8,6 @@
   "num_matched_templates": 1,
   "subset_templates": 1,  
   "results_file":"result_20corrs_1match_300temps",
-  "debug_imgs": 1
+  "debug_imgs": 0
 
 }

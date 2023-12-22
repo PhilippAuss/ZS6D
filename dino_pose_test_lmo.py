@@ -157,8 +157,21 @@ if __name__=="__main__":
                     img_prep, img_crop,_ = extractor.preprocess(Image.fromarray(img_crop), load_size=224)
 
                     with torch.no_grad():
-                        desc = extractor.extract_descriptors(img_prep.to(device), layer=11, facet='key', bin=False, include_cls=True)
-                        img_data.descs.append(desc.squeeze(0).squeeze(0).detach().cpu())
+                        # extract_multi_descriptors
+                        start_desc_ex = time.time()
+                        img_prep = img_prep.to(device)
+                        descs = extractor.extract_multi_descriptors(img_prep.to(device))
+                        # desc1 = extractor.extract_descriptors(img_prep, layer=11, facet='key', bin=False, include_cls=True)
+                        # desc = extractor.extract_descriptors(img_prep, layer=9, facet='key', bin=True, include_cls=False)
+                        # img_data.descs.append(desc.squeeze(0).squeeze(0).detach().cpu())
+                        end_desc_ex = time.time()
+                        elapsed_desc_ex = end_desc_ex - start_desc_ex
+                        
+                        img_data.descs.append(descs[1].squeeze(0).squeeze(0).detach().cpu())
+                        
+                        
+                        # desc = extractor.extract_descriptors(img_prep.to(device), layer=11, facet='key', bin=False, include_cls=True)
+                        # img_data.descs.append(desc.squeeze(0).squeeze(0).detach().cpu())
                     
                     img_data.y_offsets.append(y_offset)
                     img_data.x_offsets.append(x_offset)
@@ -192,11 +205,16 @@ if __name__=="__main__":
                     template = Image.open(templates_gt_subset[img_data.obj_names[i]][matched_template[1]]['img_crop'])
 
 
-                    try:
+                    # try:
+                    if True:
                         with torch.no_grad():
+                            image2_batch, image2_pil, scale_factor = extractor.preprocess(template, load_size=img_data.crops[i].size[0])
+                            descriptors2 = extractor.extract_descriptors(image2_batch.to(device), layer = 9, facet = 'key', bin = True)
                             start_time_fc = time.time()
                             points1, points2, crop_pil, template_pil = extractor.find_correspondences_fastknn(img_data.crops[i], 
                                                                                                         template, 
+                                                                                                        prep_img2=image2_batch,
+                                                                                                        desc_img2=descriptors2,
                                                                                                         num_pairs=config['num_correspondences'],
                                                                                                         load_size=img_data.crops[i].size[0])
                             
@@ -222,10 +240,10 @@ if __name__=="__main__":
                         end_time_pose = time.time()
                         elapsed_time_pose = end_time_pose - start_time_pose
                         
-                    except:
-                        print("Something went wrong during find_correspondences!")
-                        print(i)
-                        R_est = None
+                    # except:
+                    #     print("Something went wrong during find_correspondences!")
+                    #     print(i)
+                    #     R_est = None
                     
 
                     if R_est is None:
