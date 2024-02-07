@@ -4,3 +4,4 @@ templates/*
 __pycache__/
 .vscode/
 bop_toolkit/*
+things_to_do.txt

@@ -7,7 +7,7 @@
   "num_correspondences": 20,
   "num_matched_templates": 1,
   "subset_templates": 1,  
-  "results_file":"result_20corrs_1match_300temps",
-  "debug_imgs": 0
+  "results_file":"test_all_broken",
+  "debug_imgs": 2
 
 }

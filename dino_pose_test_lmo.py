@@ -157,6 +157,9 @@ if __name__=="__main__":
                     img_prep, img_crop,_ = extractor.preprocess(Image.fromarray(img_crop), load_size=224)
 
                     with torch.no_grad():
+                        desc = extractor.extract_descriptors(img_prep.to(device), layer=11, facet='key', bin=False, include_cls=True)
+                        img_data.descs.append(desc.squeeze(0).squeeze(0).detach().cpu())
+                        '''
                         # extract_multi_descriptors
                         start_desc_ex = time.time()
                         img_prep = img_prep.to(device)
@@ -172,6 +175,7 @@ if __name__=="__main__":
                         
                         # desc = extractor.extract_descriptors(img_prep.to(device), layer=11, facet='key', bin=False, include_cls=True)
                         # img_data.descs.append(desc.squeeze(0).squeeze(0).detach().cpu())
+                        '''
                     
                     img_data.y_offsets.append(y_offset)
                     img_data.x_offsets.append(x_offset)
@@ -200,6 +204,9 @@ if __name__=="__main__":
                 start_time = time.time()
                 min_err = np.inf
                 pose_est = False
+                
+                start_all_obj = time.time()
+                
                 for matched_template in matched_templates:
 
                     template = Image.open(templates_gt_subset[img_data.obj_names[i]][matched_template[1]]['img_crop'])
@@ -208,14 +215,19 @@ if __name__=="__main__":
                     # try:
                     if True:
                         with torch.no_grad():
-                            image2_batch, image2_pil, scale_factor = extractor.preprocess(template, load_size=img_data.crops[i].size[0])
-                            descriptors2 = extractor.extract_descriptors(image2_batch.to(device), layer = 9, facet = 'key', bin = True)
+                            # image2_batch, image2_pil, scale_factor = extractor.preprocess(template, load_size=img_data.crops[i].size[0])
+                            # descriptors2 = extractor.extract_descriptors(image2_batch.to(device), layer = 9, facet = 'key', bin = True)
                             start_time_fc = time.time()
-                            points1, points2, crop_pil, template_pil = extractor.find_correspondences_fastknn(img_data.crops[i], 
+                            # points1, points2, crop_pil, template_pil = extractor.find_correspondences_fastknn_old(img_data.crops[i], 
+                            #                                                                             template, 
+                            #                                                                             prep_img2=image2_batch,
+                            #                                                                             desc_img2=descriptors2,
+                            #                                                                             num_pairs=config['num_correspondences'],
+                            #                                                                             load_size=img_data.crops[i].size[0])
+                            
+                            points1, points2, crop_pil, template_pil = extractor.find_correspondences_fastknn_old(img_data.crops[i], 
                                                                                                         template, 
-                                                                                                        prep_img2=image2_batch,
-                                                                                                        desc_img2=descriptors2,
-                                                                                                        num_pairs=config['num_correspondences'],
+                                                                                                        num_pairs=20,
                                                                                                         load_size=img_data.crops[i].size[0])
                             
                             end_time_fc = time.time()
@@ -292,7 +304,12 @@ if __name__=="__main__":
             t_best_str = " ".join(map(str, t_best * 1000))
             elapsed_time = -1
             
+            end_time_all = time.time()
+            
+            elapsed_all = end_time_all - start_all_obj
+            
             # Write the detections to the CSV file
+            print(f"time_per_obj: {elapsed_all}")
             
             # print(f"match_time: {elapsed_time_match}, corr_time: {elapsed_time_fc}, pose_time: {elapsed_time_pose}")
             

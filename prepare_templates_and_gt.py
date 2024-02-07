@@ -5,7 +5,7 @@ import os
 import json
 import cv2
 import numpy as np
-import tf3d
+import transforms3d as tf3d
 from pose_utils import vis_utils
 import matplotlib.pyplot as plt
 import argparse

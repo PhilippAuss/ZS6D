@@ -334,7 +334,7 @@ class PoseViTExtractor(extractor.ViTExtractor):
         
         elapsed_corr = end_time_corr - start_time_corr
         
-        print(f"all_corr: {elapsed_corr}, desc: {elapsed_desc}, chunk cosine: {elapsed_time_chunk_cosine}, saliency: {elapsed_saliencey}, kmeans: {elapsed_kmeans}, bb: {elapsed_bb}")
+        #print(f"all_corr: {elapsed_corr}, desc: {elapsed_desc}, chunk cosine: {elapsed_time_chunk_cosine}, saliency: {elapsed_saliencey}, kmeans: {elapsed_kmeans}, bb: {elapsed_bb}")
 
         return points1, points2, image1_pil, image2_pil
     

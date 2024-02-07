@@ -7,6 +7,13 @@ We demonstrate the effectiveness of deep features extracted from self-supervised
 
 ![pipeline](./assets/ZS6D_pipeline.png)
 
+## Template rendering:
+To generate templates from a object model to perform inference, we refer to the [ZS6D_template_rendering](https://github.com/haberger/ZS6D_template_rendering) repository.
+
+
+## Acknowledgements
+This project is built upon [dino-vit-features](https://github.com/ShirAmir/dino-vit-features), which performed a very comprehensive study about features of self-supervised pretrained Vision Transformers and their applications, including local correspondence matching. Here is a link to their [paper](https://arxiv.org/abs/2112.05814). We thank the authors for their great work and repo.
+
 ## Citation
 If you found this repository useful please consider starring ⭐ and citing :
 
