@@ -75,8 +75,8 @@ if __name__=="__main__":
 
     # Loading templates into gpu
     templates_desc = {}
-    templates_crops = {}
-    tmpdic_per_obj = {}
+    # templates_crops = {}
+    # tmpdic_per_obj = {}
     templates_gt_subset = {}
     for obj_id, template_labels in tqdm(templates_gt.items()):
         templates_desc[obj_id] = torch.cat([torch.from_numpy(np.load(template_label['img_desc'])).unsqueeze(0)
@@ -229,9 +229,11 @@ if __name__=="__main__":
                                                                                                         template, 
                                                                                                         num_pairs=20,
                                                                                                         load_size=img_data.crops[i].size[0])
+                            print(img_data.crops[i].size[0])
                             
                             end_time_fc = time.time()
                             elapsed_time_fc = end_time_fc - start_time_fc
+                            print(f"local_correspondences: {elapsed_time_fc}")
                          
 
                         start_time_pose = time.time()
