@@ -5,3 +5,4 @@ __pycache__/
 .vscode/
 bop_toolkit/*
 things_to_do.txt
+obj_000001_xyz.ply

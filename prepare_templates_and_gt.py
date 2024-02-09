@@ -14,6 +14,7 @@ from pose_extractor import PoseViTExtractor
 from tqdm import tqdm
 from PIL import Image
 import torch
+from tools.ply_file_to_3d_coord_model import convert_unique
 
 def get_bbox_and_segmentation(depth_path):
     # Load the depth image
