@@ -1,334 +1,172 @@
-from rendering.renderer_xyz import Renderer
-from rendering.model import Model3D
-from rendering import utils as renderutil
+import argparse
 import os
 import json
-import cv2
 import numpy as np
-import transforms3d as tf3d
-from pose_utils import vis_utils
-import matplotlib.pyplot as plt
-import argparse
-from pose_extractor import PoseViTExtractor
-# from pose_extractor_dinov2 import PoseViTExtractor
-from tqdm import tqdm
-from PIL import Image
 import torch
+from pose_extractor import PoseViTExtractor
 from tools.ply_file_to_3d_coord_model import convert_unique
-
-def get_bbox_and_segmentation(depth_path):
-    # Load the depth image
-    depth_image = cv2.imread(depth_path, cv2.IMREAD_ANYDEPTH)
-
-    # Create a binary segmentation mask by checking if the depth value is greater than 0
-    segmentation_mask = np.where(depth_image != 65535, 255, 0).astype(np.uint8)
-
-    # Find contours in the segmentation mask
-    contours, _ = cv2.findContours(segmentation_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    # Find the bounding box of the largest contour (assuming there is only one object)
-    max_contour = max(contours, key=cv2.contourArea)
-    x, y, w, h = cv2.boundingRect(max_contour)
-    
-    # epsilon = 0.002 * cv2.arcLength(largest_contour, True)
-    # approx_contour = cv2.approxPolyDP(largest_contour, epsilon, True)
-    # segmentation_mask = np.zeros_like(image)
-    # cv2.drawContours(segmentation_mask, [approx_contour], -1, (255, 255, 255), thickness=cv2.FILLED)
+from rendering.renderer_xyz import Renderer
+from rendering.model import Model3D
+from tqdm import tqdm
+import cv2
+from PIL import Image
+from pose_utils import vis_utils
+from pose_utils import img_utils
+from rendering.utils import get_rendering, get_sympose
 
 
-    # Calculate the center point of the bounding box
-    center_x = x + w / 2
-    center_y = y + h / 2
-
-    # Determine which side of the bounding box is longer
-    if w > h:
-        side_length = w
-    else:
-        side_length = h
-
-    # Set the length of the longer side to be equal to the length of the shorter side
-    w = side_length
-    h = side_length
-
-    # Adjust the x and y values to ensure the center point remains the same
-    x = int(center_x - w / 2)
-    y = int(center_y - h / 2)
-
-    # Define the new quadratic bounding box
-    new_box = (x, y, w, h)
-    
-    
-    return new_box, segmentation_mask
-
-def get_rendering(obj_model,rot_pose,tra_pose, ren):
-    ren.clear()
-    M=np.eye(4)
-    M[:3,:3]=rot_pose
-    M[:3,3]=tra_pose
-    ren.draw_model(obj_model, M)
-    img_r, depth_rend = ren.finish()
-    img_r = img_r[:,:,::-1] *255
-    vu_valid = np.where(depth_rend>0)
-    bbox_gt = np.array([np.min(vu_valid[0]),np.min(vu_valid[1]),np.max(vu_valid[0]),np.max(vu_valid[1])])
-    return img_r,depth_rend,bbox_gt
-
-
-def get_sympose(rot_pose,sym):
-    rotation_lock=False
-    if(np.sum(sym)>0): #continous symmetric
-        axis_order='s'
-        multiply=[]
-        for axis_id,axis in enumerate(['x','y','z']):
-            if(sym[axis_id]==1):
-                axis_order+=axis
-                multiply.append(0)
-        for axis_id,axis in enumerate(['x','y','z']):
-            if(sym[axis_id]==0):
-                axis_order+=axis
-                multiply.append(1)
-
-        axis_1,axis_2,axis_3 =tf3d.euler.mat2euler(rot_pose,axis_order)
-        axis_1 = axis_1*multiply[0]
-        axis_2 = axis_2*multiply[1]
-        axis_3 = axis_3*multiply[2]            
-        rot_pose =tf3d.euler.euler2mat(axis_1,axis_2,axis_3,axis_order) #
-        sym_axis_tr = np.matmul(rot_pose,np.array([sym[:3]]).T).T[0]
-        z_axis = np.array([0,0,1])
-        #if symmetric axis is pallell to the camera z-axis, lock the rotaion augmentation
-        inner = np.abs(np.sum(sym_axis_tr*z_axis))
-        if(inner>0.8):
-            rotation_lock=True #lock the in-plane rotation  
-    
-    return rot_pose,rotation_lock
-    
-
-    
 if __name__=="__main__":
-    parser = argparse.ArgumentParser(description='Prepare templates, calculate descriptors, uv_maps and ground truth file')
-    parser.add_argument('--config_file', default="./dino_pose_configs/cfg_tracebot_and_gt")
-    
-    debug = False
-    obj_to_debug = "duck"
-    templ_numb_to_debug = "2"
-    
-    args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='Test pose estimation inference on test set')
+    parser.add_argument('--config_file', default="./dino_pose_configs/template_gt_preparation_configs/cfg_template_gt_generation.json")
 
-    with open(os.path.join(args.config_file), 'r') as f:
+    args = parser.parse_args()
+    
+    with open(os.path.join(args.config_file),'r') as f:
         config = json.load(f)
+        
+    with open(os.path.join(config['path_models_info_json']), 'r') as f:
+        models_info = json.load(f)
     
-    obj_name_id = config['obj_name_id_dict']
-    root_dir = config['templates_root_dir']
-    dataset = config['dataset_id']
+    obj_poses = np.load(config['path_template_poses'])
     
-    obj_id_name = {v: k for k, v in obj_name_id.items()}
+    # Creating the output folder for the cropped templates and descriptors
+    if not os.path.exists(config['path_output_templates_and_descs_folder']):
+        os.makedirs(config['path_output_templates_and_descs_folder'])
+       
+    # Creating the models_xyz folder
+    if not os.path.exists(config['path_output_models_xyz']):
+        os.makedirs(config['path_output_models_xyz'])
     
-    with open(os.path.join(root_dir,"models","models_info.json"),"r") as f:
-        model_infos = json.load(f)
+    # Preparing the object models in xyz format:
+    print("Loading and preparing the object meshes:")
+    for obj_model_name in tqdm(os.listdir(config['path_object_models_folder'])):
+        if obj_model_name.endswith(".ply"):
+            input_model_path = os.path.join(config['path_object_models_folder'], obj_model_name)
+            output_model_path = os.path.join(config['path_output_models_xyz'], obj_model_name)
+            if not os.path.exists(output_model_path):
+                convert_unique(input_model_path, output_model_path)
+    
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
-    #Preparing output file:
-    template_labels_dict = {}
-
-    # extractor = PoseViTExtractor(model_type='dino_vits8', stride=4, device=device)
+    extractor = PoseViTExtractor(model_type='dino_vits8', stride=4, device=device)
     
-    extractor = PoseViTExtractor(model_type='dino_vits8', stride=2, device=device)
+    cam_K = np.array(config['cam_K']).reshape((3,3))
     
-    for folder in tqdm(os.listdir(root_dir)):
-        folder_path = os.path.join(root_dir, folder)
+    ren = Renderer((config['template_resolution'][0], config['template_resolution'][1]), cam_K)
+    
+    template_labels_gt = dict()
+    
+    with torch.no_grad():
         
-        
-        # Make sure it's a folder and it starts with dataset
-        if os.path.isdir(folder_path) and folder.startswith(dataset):
-            train_pbr_path = os.path.join(folder_path, 'train_pbr')
-
-            obj_id = folder_path.split(dataset)[-1]
+        for template_name in tqdm(os.listdir(config['path_templates_folder'])):
             
-            if debug:
-                if obj_id not in ['2','3','4','7','13','14','15']: 
-                    if obj_id_name[obj_id] != obj_to_debug:
-                        continue
+            path_template_folder = os.path.join(config['path_templates_folder'], template_name)
             
-            obj_model = Model3D()
-            model_path = os.path.join(root_dir,"models_xyz", f"obj_{int(obj_id):06d}.ply")
+            if os.path.isdir(path_template_folder) and template_name != "models" and template_name != "models_proc":
+                
+                path_to_template_desc = os.path.join(config['path_output_templates_and_descs_folder'],
+                                                     template_name)
+                
+                if not os.path.exists(path_to_template_desc):
+                    os.makedirs(path_to_template_desc)
+                
+                obj_id = template_name.split("_")[-1]
+                
+                model_info = models_info[str(obj_id)]
+                
+                obj_model = Model3D()
+                model_path = os.path.join(config['path_output_models_xyz'], f"obj_{int(obj_id):06d}.ply")
+                
+                # Some objects are scaled inconsistently within the dataset, these exceptions are handled here:
+                obj_scale = config['obj_models_scale']
+                for obj_exc in config['obj_models_scale_exceptions']:
+                    if obj_id == obj_exc[0]:
+                        obj_scale = obj_exc[1]
+                        break
+                    
+                obj_model.load(model_path, scale=obj_scale)
+                
+                files = os.listdir(path_template_folder)
+                filtered_files = list(filter(lambda x: not x.startswith('mask_'), files))
+                filtered_files.sort(key=lambda x: os.path.getmtime(os.path.join(path_template_folder,x)))
+                
+                tmp_list = []
+                
+                for i, file in enumerate(filtered_files):
+                    
+                    # Preparing mask and bounding box [x,y,w,h]
+                    mask_path = os.path.join(path_template_folder, f"mask_{file}")
+                    mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
+                    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    x, y, w, h = cv2.boundingRect(contours[0])
+                    crop_size = max(w,h)
+                    
+                    # Preparing cropped image and desc
+                    img = cv2.imread(os.path.join(path_template_folder, file))
+                    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                    img_crop, crop_x, crop_y = img_utils.make_quadratic_crop(img, [x, y, w, h])
+                    img_prep, img_crop, _ = extractor.preprocess(Image.fromarray(img_crop), load_size=224)
+                    desc = extractor.extract_descriptors(img_prep.to(device), layer=11, facet='key', bin=False, include_cls=True)
+                    desc = desc.squeeze(0).squeeze(0).detach().cpu().numpy()
+                    
+                    R = obj_poses[i].T[:3,:3].T
+                    t = obj_poses[i].T[-1,:3]
+                    sym_continues = [0,0,0,0,0,0]
+                    keys = model_info.keys()
+                    
+                    if('symmetries_continuous' in keys):
+                        sym_continues[:3] = model_info['symmetries_continuous'][0]['axis']
+                        sym_continues[3:] = model_info['symmetries_continuous'][0]['offset']
+                    
+                    rot_pose, rotation_lock = get_sympose(R, sym_continues)
+                    
+                    img_uv, depth_rend, bbox_template = get_rendering(obj_model, rot_pose, t, ren)
+                    
+                    img_uv = img_uv.astype(np.uint8)
+                    
+                    img_uv,_,_ = img_utils.make_quadratic_crop(img_uv, [crop_y, crop_x, crop_size, crop_size])
+                    
+                    
+                    # Storing template information:
+                    tmp_dict = {"img_id": str(i),
+                                "img_name":os.path.join(os.path.join(path_template_folder,file)),
+                                "mask_name":os.path.join(os.path.join(path_template_folder,f"mask_{file}")),
+                                "obj_id": str(obj_id),
+                                "bbox_obj": [x,y,w,h],
+                                "cam_R_m2c": R.tolist(),
+                                "cam_t_m2c": t.tolist(),
+                                "model_path": os.path.join(config['path_object_models_folder'], f"obj_{int(obj_id):06d}.ply"),
+                                "model_info": models_info[str(obj_id)],
+                                "cam_K": cam_K.tolist(),
+                                "img_crop": os.path.join(path_to_template_desc, file),
+                                "img_desc": os.path.join(path_to_template_desc, f"{file.split('.')[0]}.npy"),
+                                "uv_crop": os.path.join(path_to_template_desc, f"{file.split('.')[0]}_uv.npy"),
+                        
+                    }
+                    
+                    tmp_list.append(tmp_dict)
+                    
+                    # Saving all template crops and descriptors:
+                    np.save(tmp_dict['uv_crop'], img_uv)
+                    np.save(tmp_dict['img_desc'], desc)
+                    img_crop.save(tmp_dict['img_crop'])
 
-            if not os.path.exists(model_path):
-                continue
-
-            obj_model.load(model_path,scale=0.001)
+                
+                template_labels_gt[str(obj_id)] = tmp_list
             
-            # Define the template_list for one object type:
-            template_list = []
-            counter = 0
-            for subfolder in os.listdir(train_pbr_path):
-                    subfolder_path = os.path.join(train_pbr_path, subfolder)
+    with open(config['output_template_gt_file'], 'w') as f:
+        json.dump(template_labels_gt, f)   
+                    
+                    
+                    
+                    
+                    
+                    
 
-                    if os.path.isdir(subfolder_path):
-                        scene_gt_path = os.path.join(subfolder_path, 'scene_gt.json')
-                        scene_camera_path = os.path.join(subfolder_path, 'scene_camera.json')
-                        
-                        
-                        
-                        # Check if folders exists otherwise create them:
-                        crop_folder_path = os.path.join(subfolder_path, 'crop')
-                        if not os.path.exists(crop_folder_path):
-                            os.makedirs(crop_folder_path)
-                        
-                        mask_folder_path = os.path.join(subfolder_path,'mask')
-                        if not os.path.exists(mask_folder_path):
-                            os.makedirs(mask_folder_path)
-                        
-                        mask_crop_folder_path = os.path.join(subfolder_path,'crop_mask')
-                        if not os.path.exists(mask_crop_folder_path):
-                            os.makedirs(mask_crop_folder_path)
-                            
-                        uv_map_folder_path = os.path.join(subfolder_path,'uv_map')
-                        if not os.path.exists(uv_map_folder_path):
-                            os.makedirs(uv_map_folder_path)
-                            
-                        desc_folder_path = os.path.join(subfolder_path,'desc')
-                        if not os.path.exists(desc_folder_path):
-                            os.makedirs(desc_folder_path)
-                            
-                        
-                        with open(scene_gt_path, 'r') as gt_file:
-                            gt_data = json.load(gt_file)
-                        
-                        with open(scene_camera_path, 'r') as camera_file:
-                            camera_data = json.load(camera_file)
-                        
-                        cam_K = np.array(camera_data['0']['cam_K']).reshape(3,3) 
-                           
-                        # Hardcoded have to change:    
-                        ren = Renderer((1280,720),cam_K)
-                        
-                        for templ_numb, cam_numb in zip(gt_data, camera_data):
-                            templ_data = gt_data[templ_numb][0]
-                            cam_data = camera_data[cam_numb]
-                            
-                            templ_path = os.path.join(subfolder_path, "rgb", f"{int(templ_numb):06d}.jpg")
-                            depth_path = os.path.join(subfolder_path, "depth", f"{int(templ_numb):06d}.png")
-                            templ_path_crop = os.path.join(subfolder_path, "rgb", 
-                                                        f"{int(templ_numb):06d}_template.png")
-                            
-                            bbox, mask = get_bbox_and_segmentation(depth_path)
-                            x,y,w,h = bbox
-                            cropped_mask = mask[y:y+h, x:x+w]
-                            
-                            templ = cv2.imread(templ_path)
-                            templ = cv2.cvtColor(templ, cv2.COLOR_BGR2RGB)
-                            cropped_templ = templ[y:y+h, x:x+w]
-
-                            
-                            "-------------------------------------------------------------------------------------------"
-                            with torch.no_grad():
-                            
-                                img_prep, img_crop,_ = extractor.preprocess(Image.fromarray(cropped_templ), load_size=224)
-
-                                # desc = extractor.extract_descriptors(img_prep.to(device), layer=11, facet='key', bin=False, include_cls=True)
-                                
-                                desc = extractor.extract_descriptors(img_prep.to(device), layer=9, facet='key', bin=False, include_cls=False)
-                                
-                                # saliency_map = extractor.extract_saliency_maps(img_prep.to(device))[0]
-                                
-                                # fg_mask1 = saliency_map > 0.05
-
-                                desc = desc.squeeze(0).squeeze(0).detach().cpu().numpy()
-                            
-                            "-------------------------------------------------------------------------------------------"
-                            
-                            if debug and obj_id_name[str(obj_id)] == obj_to_debug and templ_numb != templ_numb_to_debug:
-                                hello=1
-                            
-                            R = np.array(templ_data['cam_R_m2c']).reshape(3,3)
-                            t = np.array(templ_data['cam_t_m2c'])
-                            cam_K = np.array(cam_data['cam_K']).reshape(3,3)
-                            model_info = model_infos[obj_id]
-                            
-                            
-                            
-                            
-                            model_id = obj_id
-                            keys = model_info.keys()
-                            sym_continous = [0,0,0,0,0,0]
-                            if('symmetries_discrete' in keys):
-                                pass
-                                # print(model_id,"is symmetric_discrete")
-                                # print("During the training, discrete transform will be properly handled by transformer loss")
-                            if('symmetries_continuous' in keys):
-                                # print(model_id,"is symmetric_continous")
-                                # print("During the rendering, rotations w.r.t to the symmetric axis will be ignored")
-                                sym_continous[:3] = model_info['symmetries_continuous'][0]['axis']
-                                sym_continous[3:]= model_info['symmetries_continuous'][0]['offset']
-                            
-                            rot_pose,rotation_lock = get_sympose(R,sym_continous)
-                            img_uv, depth_rend, bbox_gt = get_rendering(obj_model,rot_pose,t/1000,ren)
-                            img_uv = img_uv[y:y+h, x:x+w, :]
-                            
-                            
-                            template_dic = {"img_id": str(counter),
-                                            "img_name": templ_path,
-                                            "mask_name": os.path.join(mask_folder_path,f"{int(templ_numb):06d}.png"),
-                                            "crop_mask_name": os.path.join(mask_crop_folder_path,f"{int(templ_numb):06d}.png"),
-                                            "bbox_obj": bbox,
-                                            "cam_R_m2c": R.tolist(),
-                                            "cam_t_m2c": t.tolist(),
-                                            "model_xyz_path": model_path,
-                                            "model_path": os.path.join(root_dir,"models", f"obj_{int(obj_id):06d}.ply"),
-                                            "model_info": model_info,
-                                            "cam_K": cam_K.tolist(),
-                                            "img_crop": os.path.join(crop_folder_path, f"{int(templ_numb):06d}.png"),
-                                            "img_desc": os.path.join(desc_folder_path, f"{int(templ_numb):06d}.npy"),
-                                            "uv_crop": os.path.join(uv_map_folder_path, f"{int(templ_numb):06d}.npy")                                            
-                            }
-                            
-                            np.save(template_dic['uv_crop'], img_uv)
-                            np.save(template_dic['img_desc'], desc)
-                            cv2.imwrite(template_dic['mask_name'], mask)
-                            cv2.imwrite(template_dic['crop_mask_name'], cropped_mask)
-                            img_crop.save(template_dic['img_crop'])
-                            # cv2.imwrite(template_dic['img_crop'], cropped_templ)
-                            
-                            template_list.append(template_dic)
-                            
-                            counter += 1
-                            
-                            
-                            
-                            
-                            
-                            
-            template_labels_dict[obj_id_name[str(obj_id)]] = template_list                
-            
-            with open(os.path.join("./gts", config['gt_name']), 'w') as file:
-                json.dump(template_labels_dict, file)
-                      
-                            
-                            
-                            
-                            
-                            
-                            
-        #                     plt.imshow(img_uv.astype(np.uint8))
-        #                     plt.show()
-                                        
-        #                     out_img = vis_utils.draw_3D_bbox_on_image(templ, R, t, cam_K, 
-        #                                                                 model_info, 
-        #                                                                 image_shape=templ.shape, 
-        #                                                                 factor=1, #0.001, 
-        #                                                                 colEst=(0, 205, 205))
-                            
-        #                     #out_img = cv2.cvtColor(out_img, cv2.COLOR_BGR2RGB)
-        #                     plt.imshow(out_img)
-        #                     plt.show()
-                            
-        #                     break
-
-        #             break
-        # break
-        
+                
     
     
     
-
-
+    
+    

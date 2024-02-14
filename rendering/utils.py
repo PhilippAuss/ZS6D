@@ -10,7 +10,7 @@ import cv2
 from tqdm import tqdm
 #from scipy.linalg import expm3, norm
 from scipy.linalg import expm, norm
-
+import transforms3d as tf3d
 from rendering.renderer import Renderer
 
 
@@ -236,3 +236,44 @@ def verify_6D_poses(detections, model_map, cam, image):
         filtered.append(new_det)
 
     return filtered
+
+def get_rendering(obj_model,rot_pose,tra_pose, ren):
+    ren.clear()
+    M=np.eye(4)
+    M[:3,:3]=rot_pose
+    M[:3,3]=tra_pose
+    ren.draw_model(obj_model, M)
+    img_r, depth_rend = ren.finish()
+    img_r = img_r[:,:,::-1] * 255
+    vu_valid = np.where(depth_rend>0)
+    bbox_gt = np.array([np.min(vu_valid[0]),np.min(vu_valid[1]),np.max(vu_valid[0]),np.max(vu_valid[1])])
+    return img_r,depth_rend,bbox_gt
+
+
+def get_sympose(rot_pose,sym):
+    rotation_lock=False
+    if(np.sum(sym)>0): #continous symmetric
+        axis_order='s'
+        multiply=[]
+        for axis_id,axis in enumerate(['x','y','z']):
+            if(sym[axis_id]==1):
+                axis_order+=axis
+                multiply.append(0)
+        for axis_id,axis in enumerate(['x','y','z']):
+            if(sym[axis_id]==0):
+                axis_order+=axis
+                multiply.append(1)
+
+        axis_1,axis_2,axis_3 =tf3d.euler.mat2euler(rot_pose,axis_order)
+        axis_1 = axis_1*multiply[0]
+        axis_2 = axis_2*multiply[1]
+        axis_3 = axis_3*multiply[2]            
+        rot_pose =tf3d.euler.euler2mat(axis_1,axis_2,axis_3,axis_order) #
+        sym_axis_tr = np.matmul(rot_pose,np.array([sym[:3]]).T).T[0]
+        z_axis = np.array([0,0,1])
+        #if symmetric axis is pallell to the camera z-axis, lock the rotaion augmentation
+        inner = np.abs(np.sum(sym_axis_tr*z_axis))
+        if(inner>0.8):
+            rotation_lock=True #lock the in-plane rotation  
+    
+    return rot_pose,rotation_lock

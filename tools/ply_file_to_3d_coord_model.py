@@ -23,8 +23,55 @@ def get_xyz_max(fn_read):
     z_abs = np.max(np.abs(plydata.elements[0].data['z']-z_ct))   
     
     return x_abs,y_abs,z_abs,x_ct,y_ct,z_ct
-    
 
+
+def _add_field(field: str, data: np.ndarray, field_type='u1'):
+    # Create a new dtype that includes the existing fields plus the 'red' field
+    new_dtype = np.dtype(data.dtype.descr + [(field, field_type)])
+    # Initialize a new array with the same shape as the original data, but with the new dtype
+    new_data = np.zeros(data.shape, dtype=new_dtype)
+    # Copy the data from the original fields to the new array
+    for name in data.dtype.names:
+        new_data[name] = data[name]
+        
+    # Initialize the 'red' field with zeros
+    # .shape[0] ensures we're creating a 1D array of zeros with the correct length
+    new_data[field] = np.zeros(data.shape[0])
+    
+    return new_data
+
+def _add_fields_to_PlyData(ply_data, new_fields=[('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]):
+    # Check the existing dtype of your vertex data
+    existing_dtype = ply_data['vertex'].data.dtype.descr
+    
+    # Filter out any new fields that already exist to avoid duplication
+    existing_field_names = [field[0] for field in existing_dtype]
+    new_fields_filtered = [field for field in new_fields if field[0] not in existing_field_names]
+    
+    # Create a new dtype that includes both the existing and new fields
+    new_dtype = existing_dtype + new_fields_filtered
+    
+    # Create a new numpy array for the vertex data with the new dtype
+    new_vertex_data = np.zeros(ply_data['vertex'].count, dtype=new_dtype)
+    
+    # Copy existing vertex data into the new array
+    for name in ply_data['vertex'].data.dtype.names:
+        new_vertex_data[name] = ply_data['vertex'].data[name]
+    
+    # Initialize new fields with default values
+    # for field_name, _ in new_fields_filtered:
+    #     new_vertex_data[field_name] = 0 
+    
+    # Create a new PlyElement for the modified vertex data
+    new_vertex_element = PlyElement.describe(new_vertex_data, 'vertex')
+    
+    # Reconstruct the PlyData object with the new vertex element
+    # This involves keeping all other elements unchanged
+    new_elements = [new_vertex_element if el.name == 'vertex' else el for el in ply_data.elements]
+    modified_ply_data = PlyData(new_elements, text=ply_data.text)
+    
+    return modified_ply_data
+    
 
 def convert_unique(fn_read,fn_write,center_x=True,center_y=True,center_z=True):
     plydata = PlyData.read(fn_read)
@@ -45,7 +92,10 @@ def convert_unique(fn_read,fn_write,center_x=True,center_y=True,center_z=True):
         z_ct=0
     z_abs = np.max(np.abs(plydata.elements[0].data['z']-z_ct))    
     n_vert = plydata.elements[0].data['x'].shape[0]
-   
+    
+    if 'red' not in plydata.elements[0].data.dtype.names:
+        plydata = _add_fields_to_PlyData(plydata)
+           
     for i in range(n_vert):
         r=(plydata.elements[0].data['x'][i]-x_ct)/x_abs #-1 to 1
         r = (r+1)/2 #0 to 2 -> 0 to 1        
@@ -53,8 +103,6 @@ def convert_unique(fn_read,fn_write,center_x=True,center_y=True,center_z=True):
         g = (g+1)/2
         b=(plydata.elements[0].data['z'][i]-z_ct)/z_abs
         b = (b+1)/2
-        #if b> 1: b=1
-        #if b<0: b=0
         plydata.elements[0].data['red'][i]=r*255
         plydata.elements[0].data['green'][i]=g*255
         plydata.elements[0].data['blue'][i]=b*255
@@ -63,6 +111,8 @@ def convert_unique(fn_read,fn_write,center_x=True,center_y=True,center_z=True):
 
 def rmfield( a, *fieldnames_to_remove ):
     return a[ [ name for name in a.dtype.names if name not in fieldnames_to_remove ] ]
+
+
 
 # if(len(sys.argv)<2):
 #     print("python3 tools/2_1_ply_file_to_3d_coord_model.py [cfg_fn] [dataset_name]")
