@@ -17,7 +17,7 @@ from rendering.utils import get_rendering, get_sympose
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Test pose estimation inference on test set')
-    parser.add_argument('--config_file', default="./dino_pose_configs/template_gt_preparation_configs/cfg_template_gt_generation.json")
+    parser.add_argument('--config_file', default="./dino_pose_configs/template_gt_preparation_configs/cfg_template_gt_generation_tless.json")
 
     args = parser.parse_args()
     
