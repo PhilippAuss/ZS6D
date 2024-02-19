@@ -17,7 +17,7 @@ from rendering.utils import get_rendering, get_sympose
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Test pose estimation inference on test set')
-    parser.add_argument('--config_file', default="./dino_pose_configs/template_gt_preparation_configs/cfg_template_gt_generation_tless.json")
+    parser.add_argument('--config_file', default="./dino_pose_configs/template_gt_preparation_configs/cfg_template_gt_generation_ycbv.json")
 
     args = parser.parse_args()
     
@@ -80,11 +80,6 @@ if __name__=="__main__":
                 
                 # Some objects are scaled inconsistently within the dataset, these exceptions are handled here:
                 obj_scale = config['obj_models_scale']
-                for obj_exc in config['obj_models_scale_exceptions']:
-                    if obj_id == obj_exc[0]:
-                        obj_scale = obj_exc[1]
-                        break
-                    
                 obj_model.load(model_path, scale=obj_scale)
                 
                 files = os.listdir(path_template_folder)
@@ -110,8 +105,9 @@ if __name__=="__main__":
                     desc = extractor.extract_descriptors(img_prep.to(device), layer=11, facet='key', bin=False, include_cls=True)
                     desc = desc.squeeze(0).squeeze(0).detach().cpu().numpy()
                     
-                    R = obj_poses[i].T[:3,:3].T
-                    t = obj_poses[i].T[-1,:3]
+                    # R = obj_poses[i].T[:3,:3].T
+                    R = obj_poses[i][:3,:3]
+                    t = obj_poses[i].T[-1,:3] / obj_scale
                     sym_continues = [0,0,0,0,0,0]
                     keys = model_info.keys()
                     
@@ -120,9 +116,9 @@ if __name__=="__main__":
                         sym_continues[3:] = model_info['symmetries_continuous'][0]['offset']
                     
                     rot_pose, rotation_lock = get_sympose(R, sym_continues)
-                    
+
                     img_uv, depth_rend, bbox_template = get_rendering(obj_model, rot_pose, t, ren)
-                    
+
                     img_uv = img_uv.astype(np.uint8)
                     
                     img_uv,_,_ = img_utils.make_quadratic_crop(img_uv, [crop_y, crop_x, crop_size, crop_size])

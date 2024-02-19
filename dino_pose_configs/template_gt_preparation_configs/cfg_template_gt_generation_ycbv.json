@@ -3,7 +3,6 @@
  "path_object_models_folder": "./templates/ycbv/models",
  "path_models_info_json": "./templates/ycbv/models/models_info.json",
  "obj_models_scale": 1.0,
- "obj_models_scale_exceptions": [["13",0.001],["18",0.001]],
  "path_output_templates_and_descs_folder": "./templates/ycbv_desc",
  "path_output_models_xyz": "./templates/ycbv_desc/models_xyz",
  "cam_K": [1066.778, 0.0, 312.9869,
