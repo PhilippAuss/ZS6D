@@ -275,6 +275,6 @@ def get_sympose(rot_pose,sym):
         inner = np.abs(np.sum(sym_axis_tr*z_axis))
         if(inner>0.8):
             rotation_lock=True #lock the in-plane rotation  
-        rot_pose = rot_pose/1000.
+        # rot_pose = rot_pose/1000.
     
     return rot_pose,rotation_lock

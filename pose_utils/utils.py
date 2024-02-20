@@ -34,18 +34,6 @@ def find_template(desc_input, desc_templates, num_results):
     return result
 
 
-
-# def find_template_cpu(desc_input, desc_templates, num_results):
-
-#     similarities = [(1-cosine(desc_input.squeeze().numpy().flatten(), desc_template.squeeze().numpy().flatten()), i) 
-#                     for i, desc_template in enumerate(desc_templates)] 
-#                     # if desc_input.shape==desc_template.shape]
-    
-#     sorted_sims = sorted(similarities, key=lambda x:x[0], reverse=True)
-    
-#     return [(sim[0],sim[1]) for sim in sorted_sims[:num_results]]
-
-
 def find_template_cpu(desc_input, desc_templates, num_results):
     # Flatten and normalize the desc_input
     desc_input_flat = desc_input.ravel()
@@ -175,10 +163,6 @@ def weighted_solve_pnp_ransac(object_points, image_points, camera_matrix, dist_c
     return refined_rvec, refined_tvec, best_inliers
 
 
-
-
-
-
 def get_pose_from_correspondences(points1, points2, y_offset, x_offset, img_uv, cam_K, norm_factor, scale_factor, resize_factor=1.0):
     
     # filter valid points
@@ -203,12 +187,11 @@ def get_pose_from_correspondences(points1, points2, y_offset, x_offset, img_uv, 
     valid_points1[:,[0,1]] = valid_points1[:,[1,0]]
 
     try:
-    # if True:
         retval, rvec, tvec, inliers = cv2.solvePnPRansac(np.array(points2_3D).astype(np.float64), valid_points1, cam_K,
                                                         distCoeffs=None, iterationsCount=100, reprojectionError=8.0)
     
     except:
-        print("What the Fuck")
+        print("Solving PnP failed!")
         return None, None
     
     R_est, _ = cv2.Rodrigues(rvec)
@@ -217,48 +200,48 @@ def get_pose_from_correspondences(points1, points2, y_offset, x_offset, img_uv, 
     return R_est, t_est
 
 
-def get_pose_from_correspondences_v2(list_points1, list_points2, y_offset, x_offset, list_img_uv, 
-                                     cam_K, norm_factor, scale_factor, resize_factor=1.0):
+# def get_pose_from_correspondences_v2(list_points1, list_points2, y_offset, x_offset, list_img_uv, 
+#                                      cam_K, norm_factor, scale_factor, resize_factor=1.0):
     
-    # Initialize empty lists for valid points
-    valid_points1 = []
-    points2_3D = []
+#     # Initialize empty lists for valid points
+#     valid_points1 = []
+#     points2_3D = []
 
-    # Iterate through multiple sets of points1, points2 and img_uv
-    for points1, points2, img_uv in zip(list_points1, list_points2, list_img_uv):
+#     # Iterate through multiple sets of points1, points2 and img_uv
+#     for points1, points2, img_uv in zip(list_points1, list_points2, list_img_uv):
 
-        # filter valid points
-        valid_points2 = []
-        for point1, point2 in zip(points1, points2):
-            if np.any(img_uv[point2[0], point2[1]] != [0,0,0]):
-                valid_points1.append(point1)
-                valid_points2.append(point2)
+#         # filter valid points
+#         valid_points2 = []
+#         for point1, point2 in zip(points1, points2):
+#             if np.any(img_uv[point2[0], point2[1]] != [0,0,0]):
+#                 valid_points1.append(point1)
+#                 valid_points2.append(point2)
         
-        points2_3D.extend(transform_2D_3D(valid_points2, img_uv, norm_factor))
+#         points2_3D.extend(transform_2D_3D(valid_points2, img_uv, norm_factor))
 
-    # Check if enough correspondences for PnPRansac
-    if len(valid_points1) < 4:
-        return None, None
+#     # Check if enough correspondences for PnPRansac
+#     if len(valid_points1) < 4:
+#         return None, None
 
-    valid_points1 = np.array(valid_points1).astype(np.float64)/resize_factor
+#     valid_points1 = np.array(valid_points1).astype(np.float64)/resize_factor
 
-    valid_points1[:,0] += y_offset
-    valid_points1[:,1] += x_offset
+#     valid_points1[:,0] += y_offset
+#     valid_points1[:,1] += x_offset
 
-    valid_points1[:,[0,1]] = valid_points1[:,[1,0]]
+#     valid_points1[:,[0,1]] = valid_points1[:,[1,0]]
 
-    try:
-        retval, rvec, tvec, inliers = cv2.solvePnPRansac(np.array(points2_3D).astype(np.float64), valid_points1, cam_K,
-                                                        distCoeffs=None, iterationsCount=100, reprojectionError=8.0)
+#     try:
+#         retval, rvec, tvec, inliers = cv2.solvePnPRansac(np.array(points2_3D).astype(np.float64), valid_points1, cam_K,
+#                                                         distCoeffs=None, iterationsCount=100, reprojectionError=8.0)
     
-    except:
-        print("What the Fuck")
-        return None, None
+#     except:
+#         print("What the Fuck")
+#         return None, None
     
-    R_est, _ = cv2.Rodrigues(rvec)
-    t_est = np.squeeze(tvec) * scale_factor
+#     R_est, _ = cv2.Rodrigues(rvec)
+#     t_est = np.squeeze(tvec) * scale_factor
 
-    return R_est, t_est
+#     return R_est, t_est
 
 
     

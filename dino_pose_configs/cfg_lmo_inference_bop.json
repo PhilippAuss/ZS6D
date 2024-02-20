@@ -1,5 +1,5 @@
 { "templates_gt_path": "./gts/template_gts/linemod_template_gt.json",
-  "gt_path": "./gts/test_gts/lmo_test_gt_sam_200.json",
+  "gt_path": "./gts/test_gts/lmo_bop_test_gt_sam.json",
   "dataset_path": "/home/philipp/Projects/PhD_projects/Data/bop/lmo",
   "scale_factor": 0.001,
   "bbox_type": "bbox_visib",

@@ -11,7 +11,7 @@ import numpy as np
 from scipy import spatial
 
 from bop_toolkit.bop_toolkit_lib import misc
-from bo_toolkit.bop_toolkit_lib import visibility
+from bop_toolkit.bop_toolkit_lib import visibility
 
 
 def vsd(R_est, t_est, R_gt, t_gt, depth_test, K, delta, taus,

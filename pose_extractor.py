@@ -220,7 +220,7 @@ class PoseViTExtractor(extractor.ViTExtractor):
         return points1, points2, image1_pil, image2_pil
     
     
-    def find_correspondences_fastknn_old(self, pil_img1, pil_img2, num_pairs: int = 10, load_size: int = 224, 
+    def find_correspondences_fastkmeans(self, pil_img1, pil_img2, num_pairs: int = 10, load_size: int = 224, 
                              layer: int = 9, facet: str = 'key', bin: bool = True, 
                              thresh: float = 0.05) -> Tuple[List[Tuple[float, float]], List[Tuple[float, float]], Image.Image, Image.Image]:
         

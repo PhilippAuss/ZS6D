@@ -82,7 +82,7 @@ class ZS6D:
                     crop_size = self.max_crop_size
                     
                     
-                points1, points2, crop_pil, template_pil = self.extractor.find_correspondences_fastknn_old(img_crop, 
+                points1, points2, crop_pil, template_pil = self.extractor.find_correspondences_fastkmeans(img_crop, 
                                                                                                            template, 
                                                                                                            num_pairs=20,
                                                                                                            load_size=crop_size)
