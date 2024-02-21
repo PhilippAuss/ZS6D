@@ -1,4 +1,0 @@
-{ "templates_root_dir": "/mnt/Littleboy/dino-vit-features/templates/tracebot",
- "dataset_id": "tracebot",
- "gt_name": "tracebot_template_gt.json"
-}

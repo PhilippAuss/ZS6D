@@ -17,7 +17,7 @@ from rendering.utils import get_rendering, get_sympose
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Test pose estimation inference on test set')
-    parser.add_argument('--config_file', default="./dino_pose_configs/template_gt_preparation_configs/cfg_template_gt_generation_ycbv.json")
+    parser.add_argument('--config_file', default="./zs6d_configs/template_gt_preparation_configs/cfg_template_gt_generation_ycbv.json")
 
     args = parser.parse_args()
     
@@ -39,12 +39,24 @@ if __name__=="__main__":
     
     # Preparing the object models in xyz format:
     print("Loading and preparing the object meshes:")
+    norm_factors = {}
     for obj_model_name in tqdm(os.listdir(config['path_object_models_folder'])):
         if obj_model_name.endswith(".ply"):
+            obj_id = int(obj_model_name.split("_")[-1].split(".ply")[0])
             input_model_path = os.path.join(config['path_object_models_folder'], obj_model_name)
             output_model_path = os.path.join(config['path_output_models_xyz'], obj_model_name)
             if not os.path.exists(output_model_path):
-                convert_unique(input_model_path, output_model_path)
+                x_abs,y_abs,z_abs,x_ct,y_ct,z_ct = convert_unique(input_model_path, output_model_path)
+                
+                norm_factors[obj_id] = {'x_scale':float(x_abs),
+                                       'y_scale':float(y_abs),
+                                       'z_scale':float(z_abs),
+                                       'x_ct':float(x_ct),
+                                       'y_ct':float(y_ct),
+                                       'z_ct':float(z_ct)}
+    
+    with open(os.path.join(config['path_output_models_xyz'],"norm_factor.json"),"w") as f:
+        json.dump(norm_factors,f)
     
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

@@ -1,7 +1,0 @@
-{ "templates_gt_path": "./gts/ycbv_templates_gt_with_uvmap_desc.json",
-  "gt_path": "./gts/ycbv_test_sam_gt_new.json",
-  "dataset_path": "/mnt/Fatboy/Data/ycbv_test_bop19",
-  "scale_factor": 0.001,
-  "bbox_type": "bbox_visib",
-  "norm_factor_path":"/home/philipp/Projects/PhD_projects/Data/bop/ycbv/models_xyz/norm_factor.json"
-}

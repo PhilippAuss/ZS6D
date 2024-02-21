@@ -1,8 +1,0 @@
-{ "templates_gt_path": "./gts/tless_templates_gt_correct.json",
-  "gt_path_old": "./gts/tless_test_sam_gt_new.json",
-  "gt_path": "./gts/tless_test_sam_gt_newest.json",
-  "dataset_path": "/mnt/Fatboy/Data/bop/tless",
-  "scale_factor": 0.001,
-  "bbox_type": "bbox_visib",
-  "norm_factor_path":"./templates/tless_desc/models_xyz/norm_factor.json"
-}

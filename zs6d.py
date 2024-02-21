@@ -109,42 +109,5 @@ class ZS6D:
             
             return None, None
         
-
-# if __name__=="__main__":
-#     img_id = '3'
-    
-#     with open(os.path.join("./dino_pose_configs/cfg_lmo_inference_bop.json"), "r") as f:
-#         config = json.load(f)
-    
-
-#     pose_estimator = ZS6D(config['templates_gt_path'], config['norm_factor_path'])
-    
-#     with open(os.path.join(config['gt_path']), 'r') as f:
-#         data_gt = json.load(f)
-        
-#     for i in range(5):
-#         obj_number = i
-
-#         obj_name = data_gt[img_id][obj_number]['obj_name']
-#         obj_id = data_gt[img_id][obj_number]['obj_id']
-#         cam_K = np.array(data_gt[img_id][obj_number]['cam_K']).reshape((3,3))
-#         bbox = data_gt[img_id][obj_number]['bbox_visib']
-
-#         img_path = os.path.join(config['dataset_path'], data_gt[img_id][obj_number]['img_name'].split("./")[-1])
-#         img = Image.open(img_path)
-
-#         mask = data_gt[img_id][obj_number]['mask_sam']
-#         mask = img_utils.rle_to_mask(mask)
-#         mask = mask.astype(np.uint8)
-
-#         start_time = time.time()
-
-#         R_est, t_est = pose_estimator.get_pose(img, obj_name, obj_id, mask, cam_K, bbox=None)
-
-#         end_time = time.time()
-
-#         print(f"Pose estimation time: {end_time-start_time}")
-#         print(f"R_est: {R_est}")
-#         print(f"t_est: {t_est}")
         
         

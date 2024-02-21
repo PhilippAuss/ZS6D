@@ -1,0 +1,12 @@
+{ "templates_gt_path": "./gts/template_gts/linemod_template_gt.json",
+  "gt_path": "./gts/test_gts/lmo_bop_test_gt_sam.json",
+  "dataset_path": "/home/philipp/Projects/PhD_projects/Data/bop/lmo",
+  "scale_factor": 0.001,
+  "bbox_type": "bbox_visib",
+  "template_subset": 1,
+  "results_file": "results_lmo_bop_sam_1templates.csv",
+  "norm_factor_path":"./templates/linemod_desc/models_xyz/norm_factor.json",
+  "num_matched_templates":1,
+  "image_resolution":[480, 640],
+  "debug_imgs": 1 
+}

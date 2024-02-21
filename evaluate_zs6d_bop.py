@@ -23,7 +23,7 @@ import csv
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Test pose estimation inference on test set')
-    parser.add_argument('--config_file', default="./dino_pose_configs/bop_eval_configs/cfg_tless_inference_bop.json")
+    parser.add_argument('--config_file', default="./zs6d_configs/bop_eval_configs/cfg_ycbv_inference_bop.json")
 
     args = parser.parse_args()
 
@@ -54,7 +54,7 @@ if __name__=="__main__":
         csv_writer.writerow(headers)
         
     if config['debug_imgs']:
-        debug_img_path = os.path.join("./debug_img",config['results_file'].split(".csv")[0])
+        debug_img_path = os.path.join("./debug_imgs",config['results_file'].split(".csv")[0])
         if not os.path.exists(debug_img_path):
             os.makedirs(debug_img_path)
         

@@ -1,4 +1,0 @@
-{ "templates_root_dir": "/mnt/Littleboy/dino-vit-features/templates/tless",
- "dataset_id": "tless",
- "gt_name": "tless_template_gt_new.json"
-}

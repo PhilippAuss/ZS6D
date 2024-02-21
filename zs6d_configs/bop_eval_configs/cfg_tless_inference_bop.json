@@ -1,0 +1,12 @@
+{ "templates_gt_path": "./gts/template_gts/tless_template_gt.json",
+  "gt_path": "./gts/test_gts/tless_bop_test_gt_sam.json",
+  "dataset_path": "/mnt/Fatboy/Data/bop/tless",
+  "scale_factor": 0.001,
+  "bbox_type": "bbox_visib",
+  "template_subset": 4,
+  "results_file": "results_tless_bop_sam_1templates.csv",
+  "norm_factor_path":"./templates/tless_desc/models_xyz/norm_factor.json",
+  "num_matched_templates":1,
+  "image_resolution":[540, 720],
+  "debug_imgs": 1 
+}
