@@ -6,7 +6,7 @@ import os
 from extractor import ViTExtractor
 import json
 import matplotlib.pyplot as plt
-from inspect_similarity import chunk_cosine_sim
+from src.inspect_similarity import chunk_cosine_sim
 import sys
 from extractor import ViTExtractor
 from scipy.stats import pearsonr

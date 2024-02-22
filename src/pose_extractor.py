@@ -1,14 +1,14 @@
 import torch
 from torch import nn
 from torchvision import transforms
-import extractor
+import src.extractor as extractor
 from PIL import Image
 from typing import Union, List, Tuple
-from correspondences import chunk_cosine_sim
+from src.correspondences import chunk_cosine_sim
 from sklearn.cluster import KMeans
 import numpy as np
 import time
-from kmeans_pytorch import kmeans
+from external.kmeans_pytorch.kmeans_pytorch import kmeans
 
 
 

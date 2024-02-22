@@ -3,7 +3,7 @@ import os
 import json
 import numpy as np
 import torch
-from pose_extractor import PoseViTExtractor
+from src.pose_extractor import PoseViTExtractor
 from tools.ply_file_to_3d_coord_model import convert_unique
 from rendering.renderer_xyz import Renderer
 from rendering.model import Model3D

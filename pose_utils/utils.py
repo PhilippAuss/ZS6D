@@ -6,7 +6,7 @@ from typing import Union, List, Tuple
 import numpy as np
 from sklearn.cluster import KMeans
 from PIL import Image
-from correspondences import chunk_cosine_sim
+from src.correspondences import chunk_cosine_sim
 from scipy.spatial.distance import cosine
 
 def find_template(desc_input, desc_templates, num_results):

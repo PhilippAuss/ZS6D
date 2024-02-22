@@ -1,0 +1,3 @@
+[submodule "external/kmeans_pytorch"]
+	path = external/kmeans_pytorch
+	url = git@github.com:subhadarship/kmeans_pytorch.git

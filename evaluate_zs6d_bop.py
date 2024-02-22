@@ -4,9 +4,7 @@ import os
 import torch
 from tqdm import tqdm
 import numpy as np
-from pose_extractor import PoseViTExtractor
-from extractor import ViTExtractor
-import copy
+from src.pose_extractor import PoseViTExtractor
 from pose_utils.data_utils import ImageContainer_masks
 import pose_utils.img_utils as img_utils
 from PIL import Image
@@ -15,7 +13,6 @@ import pose_utils.utils as utils
 import pose_utils.vis_utils as vis_utils
 import time
 import matplotlib.pyplot as plt
-from correspondences import draw_correspondences
 import pose_utils.eval_utils as eval_utils
 import csv
 
@@ -23,7 +20,7 @@ import csv
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Test pose estimation inference on test set')
-    parser.add_argument('--config_file', default="./zs6d_configs/bop_eval_configs/cfg_ycbv_inference_bop.json")
+    parser.add_argument('--config_file', default="./zs6d_configs/bop_eval_configs/cfg_lmo_inference_bop.json")
 
     args = parser.parse_args()
 
@@ -117,6 +114,7 @@ if __name__=="__main__":
                 img_data.model_infos.append(img_label['model_info'])
 
                 try:
+                # if True:
                     mask = img_utils.rle_to_mask(img_label['mask_sam'])
                     
                     mask = mask.astype(np.uint8)

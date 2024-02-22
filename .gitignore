@@ -5,4 +5,7 @@ __pycache__/
 bop_toolkit/*
 things_to_do.txt
 debug_imgs/*
-
+zs6d_old.py
+pose_estimation.log
+zs6d_old.py
+evaluate_zs6d_bop_with_logging.py
