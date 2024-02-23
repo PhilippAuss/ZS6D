@@ -4,7 +4,11 @@
 
 We demonstrate the effectiveness of deep features extracted from self-supervised, pre-trained Vision Transformer (ViT) for Zero-shot 6D pose estimation. For more detailed information check out the corresponding [[paper](https://arxiv.org/pdf/2309.11986.pdf)].
 
+## Overview of the Pipeline:
+
 ![pipeline](./assets/ZS6D_pipeline.png)
+
+Note that this repo only deals with 6D pose estimation, you need segmentation masks as input. These can be obtained with supervised trained methods or zero-shot methods. For zero-shot we refer to [[cnos](https://github.com/nv-nguyen/cnos)].
 
 ## Installation:
 
