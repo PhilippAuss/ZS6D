@@ -17,8 +17,17 @@ To generate templates from a object model to perform inference, we refer to the 
 
 ## Template preparation:
 
+1. set up a config file for template preparation
+
+```zs6d_configs/template_gt_preparation_configs/your_config.json```
+
+2. Run the preparation script with your config_file to generate your_template_gt_file.json prepare template descriptors and template uv maps
+
+```python3 prepare_templates_and_gt.py --config_file your_config.json```
+
 
 ## Inference:
+
 
 ## Evaluation on BOP Datasets:
 
