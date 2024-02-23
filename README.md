@@ -2,13 +2,25 @@
 
 ![teaser](./assets/overview.png)
 
-[[paper](https://arxiv.org/pdf/2309.11986.pdf)]
-We demonstrate the effectiveness of deep features extracted from self-supervised, pre-trained Vision Transformer (ViT) for Zero-shot 6D pose estimation.
+We demonstrate the effectiveness of deep features extracted from self-supervised, pre-trained Vision Transformer (ViT) for Zero-shot 6D pose estimation. For more detailed information check out the corresponding [[paper](https://arxiv.org/pdf/2309.11986.pdf)].
 
 ![pipeline](./assets/ZS6D_pipeline.png)
 
+## Installation:
+
+### Docker setup:
+
+### ROS integration:
+
 ## Template rendering:
 To generate templates from a object model to perform inference, we refer to the [ZS6D_template_rendering](https://github.com/haberger/ZS6D_template_rendering) repository.
+
+## Template preparation:
+
+
+## Inference:
+
+## Evaluation on BOP Datasets:
 
 
 ## Acknowledgements
