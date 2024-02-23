@@ -1,3 +1,7 @@
 [submodule "external/kmeans_pytorch"]
 	path = external/kmeans_pytorch
 	url = git@github.com:subhadarship/kmeans_pytorch.git
+
+[submodule "bop_toolkit"]
+	path = bop_toolkit
+	url = https://github.com/thodan/bop_toolkit.git 
