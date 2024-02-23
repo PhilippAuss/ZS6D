@@ -42,20 +42,25 @@ After setting up your_template_config.json you can instantiate your ZS6D module 
 
 ```gts/test_gts/lmo_bop_test_gt_sam.json```
 
-Additionally you have to download the corresponding [BOP test images](https://bop.felk.cvut.cz/datasets/#LM-O).
-If you want to test another dataset as the provided, you have to generate ground truth file with the following structure:
+Additionally, you have to download the corresponding [BOP test images](https://bop.felk.cvut.cz/datasets/#LM-O). If you want to test another dataset as the provided, you have to generate a ground truth file with the following structure:
 
-```{"object_id":[{"scene_id": "00001", 
-                  "img_name": "relative_path_to_image/image_name.png", 
-                  "obj_id": "..", 
-                  "bbox_obj": [], 
-                  "cam_t_m2c": [], 
-                  "cam_R_m2c": [], 
-                  "cam_K":[]
-                  "mask_sam": [] # mask in RLE encoding },...
-
-]}```
-
+```json
+{
+  "object_id": [
+    {
+      "scene_id": "00001", 
+      "img_name": "relative_path_to_image/image_name.png", 
+      "obj_id": "..", 
+      "bbox_obj": [], 
+      "cam_t_m2c": [], 
+      "cam_R_m2c": [], 
+      "cam_K":[],
+      "mask_sam": [] // mask in RLE encoding
+    }
+    ,...
+  ]
+}
+```
 
 3. run the evaluation script with your_eval_config.json
 
