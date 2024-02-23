@@ -8,7 +8,7 @@ We demonstrate the effectiveness of deep features extracted from self-supervised
 
 ![pipeline](./assets/ZS6D_pipeline.png)
 
-Note that this repo only deals with 6D pose estimation, you need segmentation masks as input. These can be obtained with supervised trained methods or zero-shot methods. For zero-shot we refer to [[cnos](https://github.com/nv-nguyen/cnos)].
+Note that this repo only deals with 6D pose estimation, you need segmentation masks as input. These can be obtained with supervised trained methods or zero-shot methods. For zero-shot we refer to [cnos](https://github.com/nv-nguyen/cnos).
 
 ## Installation:
 
