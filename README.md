@@ -1,6 +1,6 @@
 # ZS6D
 
-![teaser](./assets/overview.png)
+<img src="./assets/overview.png" width="500" alt="teaser"/>
 
 We demonstrate the effectiveness of deep features extracted from self-supervised, pre-trained Vision Transformer (ViT) for Zero-shot 6D pose estimation. For more detailed information check out the corresponding [[paper](https://arxiv.org/pdf/2309.11986.pdf)].
 
