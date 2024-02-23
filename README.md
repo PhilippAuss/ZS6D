@@ -19,17 +19,28 @@ To generate templates from a object model to perform inference, we refer to the 
 
 1. set up a config file for template preparation
 
-```zs6d_configs/template_gt_preparation_configs/your_config.json```
+```zs6d_configs/template_gt_preparation_configs/your_template_config.json```
 
-2. Run the preparation script with your config_file to generate your_template_gt_file.json prepare template descriptors and template uv maps
+2. run the preparation script with your config_file to generate your_template_gt_file.json and prepare the template descriptors and template uv maps
 
-```python3 prepare_templates_and_gt.py --config_file your_config.json```
+```python3 prepare_templates_and_gt.py --config_file zs6d_configs/template_gt_preparation_configs/your_template_config.json```
 
 
 ## Inference:
+After setting up your_template_config.json you can instantiate your ZS6D module and perform inference. An example is provided in:
+
+```test_zs6d.ipynb```
 
 
 ## Evaluation on BOP Datasets:
+
+1. set up a config file for BOP evaluation
+
+```zs6d_configs/bop_eval_configs/your_eval_config.json```
+
+2. run the evaluation script with your_eval_config.json
+
+```python3 prepare_templates_and_gt.py --config_file zs6d_configs/template_gt_preparation_configs/your_eval_config.json```
 
 
 ## Acknowledgements
