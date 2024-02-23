@@ -12,10 +12,14 @@ import cv2
 import pose_utils.utils as utils
 import pose_utils.vis_utils as vis_utils
 import time
-import matplotlib.pyplot as plt
 import pose_utils.eval_utils as eval_utils
 import csv
+import logging
 
+# Setup logging
+logging.basicConfig(level=logging.INFO, filename="pose_estimation.log",
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 if __name__=="__main__":
@@ -58,6 +62,7 @@ if __name__=="__main__":
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     extractor = PoseViTExtractor(model_type='dino_vits8', stride=4, device=device)
+    print("Loading PoseViTExtractor is done!")
 
     # Loading templates into gpu
     templates_desc = {}
@@ -65,15 +70,18 @@ if __name__=="__main__":
     tmpdic_per_obj = {}
     templates_gt_new = {}
     for obj_id, template_labels in tqdm(templates_gt.items()):
-        templates_desc[obj_id] = torch.cat([torch.from_numpy(np.load(template_label['img_desc'])).unsqueeze(0)
-                                              for i, template_label in enumerate(template_labels) if i % config['template_subset'] == 0], dim=0)
-        
-        templates_gt_new[obj_id] = [template_label for i, template_label in enumerate(template_labels) if i % config['template_subset'] == 0]
+        try:
+            templates_desc[obj_id] = torch.cat([torch.from_numpy(np.load(template_label['img_desc'])).unsqueeze(0)
+                                                for i, template_label in enumerate(template_labels) if i % config['template_subset'] == 0], dim=0)
+            
+            templates_gt_new[obj_id] = [template_label for i, template_label in enumerate(template_labels) if i % config['template_subset'] == 0]
+        except Exception as e:
+            logger.error(f"Error processing templates for object {obj_id}: {e}")
+            
+    print("Preparing templates finished!")
     
-    print("Preparing templates and loading of extractor is done!")
     
-    
-
+    print("Processing input images:")
     for all_id, img_labels in tqdm(data_gt.items()):
         scene_id = all_id.split("_")[0]
         img_id = all_id.split("_")[-1]
@@ -141,8 +149,8 @@ if __name__=="__main__":
                     img_data.x_offsets.append(x_offset)
                     img_data.masks.append(mask_3_channel)
                         
-                except:
-                    print("No segmentation mask found!")
+                except Exception as e:
+                    logger.warning(f"Loading mask and extracting descriptor failed for img {img_path} and object_id {obj_index}: {e}")
                     img_data.crops.append(None)
                     img_data.descs.append(None)
                     img_data.y_offsets.append(None)
@@ -150,13 +158,16 @@ if __name__=="__main__":
                     img_data.masks.append(None)
                         
         for i in range(len(img_data.crops)):
-            
+            start_time = time.time()
             object_id = img_data.obj_ids[i]
             if img_data.crops[i] is not None:
-                matched_templates = utils.find_template_cpu(img_data.descs[i], 
-                                                            templates_desc[object_id], 
-                                                            num_results=config['num_matched_templates'])
-                start_time = time.time()
+                try:
+                    matched_templates = utils.find_template_cpu(img_data.descs[i], 
+                                                                templates_desc[object_id], 
+                                                                num_results=config['num_matched_templates'])
+                except Exception as e:
+                    logger.error(f"Template matching failed for {img_data.img_name} and object_id {img_data.obj_ids[i]}: {e}")
+                    
                 min_err = np.inf
                 pose_est = False
                 for matched_template in matched_templates:
@@ -169,9 +180,11 @@ if __name__=="__main__":
                                                                                                                  template, 
                                                                                                                  num_pairs=20,
                                                                                                                  load_size=img_data.crops[i].size[0])
+                    except Exception as e:
+                        logging.error(f"Local correspondence matching failed for {img_data.img_name} and object_id {img_data.obj_ids[i]}: {e}")
                             
                                         
-
+                    try:
                         img_uv = np.load(templates_gt_new[object_id][matched_template[1]]['uv_crop'])
                         
                         img_uv = img_uv.astype(np.uint8)
@@ -186,14 +199,12 @@ if __name__=="__main__":
                                                                         img_data.cam_K,
                                                                         norm_factors[str(img_data.obj_ids[i])],
                                                                         config['scale_factor'])
-                    except:
-                        print("Something went wrong during find_correspondences!")
-                        print(i)
+                    except Exception as e:
+                        logger.error(f"Not enough correspondences could be extracted for {img_data.img_name} and object_id {object_id}: {e}")
                         R_est = None
                     
 
                     if R_est is None:
-                        print(f"Not enough feasible correspondences where found for {img_data.obj_ids[i]}")
                         R_est = np.array(templates_gt_new[object_id][matched_template[1]]['cam_R_m2c']).reshape((3,3))
                         t_est = np.array([0.,0.,0.])
 
@@ -204,7 +215,6 @@ if __name__=="__main__":
                         min_err = err
                         R_best = R_est
                         t_best = t_est
-                        elapsed_time = end_time-start_time
                         pose_est = True
                 
                 if not pose_est:
@@ -213,7 +223,7 @@ if __name__=="__main__":
                                     [0.,0.,1.0]])
                     
                     t_best = np.array([0.,0.,0.])
-                    print("No Pose could be determined")
+                    logger.warning(f"No pose could be determined for {img_data.img_name} and object_id {object_id}")
                     score = 0.
                 else:
                     score = 0.
@@ -224,7 +234,7 @@ if __name__=="__main__":
                 [0.,0.,1.0]])
                     
                 t_best = np.array([0.,0.,0.])
-                print("No Pose could be determined")
+                logger.warning(f"No Pose could be determined for {img_data.img_name} and object_id {object_id} because no object crop available")
                 score = 0.
 
                 
@@ -232,7 +242,7 @@ if __name__=="__main__":
             # Prepare for writing:
             R_best_str = " ".join(map(str, R_best.flatten()))
             t_best_str = " ".join(map(str, t_best * 1000))
-            elapsed_time = -1
+            elapsed_time = end_time-start_time
             # Write the detections to the CSV file
             
             # ['scene_id', 'im_id', 'obj_id', 'score', 'R', 't', 'time']
