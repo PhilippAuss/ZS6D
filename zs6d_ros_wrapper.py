@@ -15,16 +15,16 @@ from robokudo_msgs.msg import GenericImgProcAnnotatorResult, GenericImgProcAnnot
 import json
 import ros_numpy
 import transforms3d as tf3d
+import matplotlib.pyplot as plt
+import pose_utils.vis_utils as vis_utils
+
 
 class ZS6D_ROS:
     def __init__(self, config_file):
-            self.object_name_mapping = {
-                "name1": "1",
-            }
-
             with open(os.path.join(config_file), 'r') as f:
                 config = json.load(f)
 
+            self.object_name_mapping = config["object_mapping"]
             self.intrinsics = np.asarray(
                  rospy.get_param(
                  '/pose_estimator/intrinsics',
@@ -56,10 +56,10 @@ class ZS6D_ROS:
 
         # === IN ===
         # --- rgb
-        bb_detections = req.bb_detections
+        # bb_detections = req.bb_detections
         mask_detections = req.mask_detections
         class_names = req.class_names
-        description = req.description
+        # description = req.description
         rgb = req.rgb
         depth = req.depth
 
@@ -67,8 +67,16 @@ class ZS6D_ROS:
         # assert width == 640 and height == 480
 
         image = ros_numpy.numpify(rgb)
-        depth_img = ros_numpy.numpify(depth)
-        mask_detections = [ros_numpy.numpify(mask_img) for mask_img in req.mask_detections]
+
+        try:
+            depth_img = ros_numpy.numpify(depth)
+        except Exception as e:
+             rospy.logwarn("Missing depth image in the goal.")
+
+        print("RGB", image.shape, image.dtype)
+        mask_detections = [ros_numpy.numpify(mask_img).astype(np.uint8)
+                            for mask_img in req.mask_detections]
+        print("mask", mask_detections[0].shape, mask_detections[0].dtype)
 
 
         valid_class_names = []

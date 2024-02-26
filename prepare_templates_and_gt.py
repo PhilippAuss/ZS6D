@@ -45,15 +45,15 @@ if __name__=="__main__":
             obj_id = int(obj_model_name.split("_")[-1].split(".ply")[0])
             input_model_path = os.path.join(config['path_object_models_folder'], obj_model_name)
             output_model_path = os.path.join(config['path_output_models_xyz'], obj_model_name)
-            if not os.path.exists(output_model_path):
-                x_abs,y_abs,z_abs,x_ct,y_ct,z_ct = convert_unique(input_model_path, output_model_path)
+            # if not os.path.exists(output_model_path):
+            x_abs,y_abs,z_abs,x_ct,y_ct,z_ct = convert_unique(input_model_path, output_model_path)
 
-                norm_factors[obj_id] = {'x_scale':float(x_abs),
-                                       'y_scale':float(y_abs),
-                                       'z_scale':float(z_abs),
-                                       'x_ct':float(x_ct),
-                                       'y_ct':float(y_ct),
-                                       'z_ct':float(z_ct)}
+            norm_factors[obj_id] = {'x_scale':float(x_abs),
+                                    'y_scale':float(y_abs),
+                                    'z_scale':float(z_abs),
+                                    'x_ct':float(x_ct),
+                                    'y_ct':float(y_ct),
+                                    'z_ct':float(z_ct)}
 
     with open(os.path.join(config['path_output_models_xyz'],"norm_factor.json"),"w") as f:
         json.dump(norm_factors,f)
