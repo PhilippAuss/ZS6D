@@ -54,7 +54,7 @@ class ZS6D:
         
         self.logger.info("Preparing templates and loading of extractor is done!")
         
-    def get_pose(self, img, obj_name, obj_id, mask, cam_K, bbox=None):
+    def get_pose(self, img, obj_id, mask, cam_K, bbox=None):
         try:
             if bbox is None:
                 bbox = img_utils.get_bounding_box_from_mask(mask)
@@ -81,6 +81,8 @@ class ZS6D:
                     crop_size = img_crop.size[0]
                 else:
                     crop_size = self.max_crop_size
+                    
+                resize_factor = float(crop_size) / img_crop.size[0]
                 
                 points1, points2, crop_pil, template_pil = self.extractor.find_correspondences_fastkmeans(img_crop, template, num_pairs=20, load_size=crop_size)
                 
@@ -91,7 +93,12 @@ class ZS6D:
                 img_uv = img_uv.astype(np.uint8)
                 img_uv = cv2.resize(img_uv, (crop_size, crop_size))
                 
-                R_est, t_est = utils.get_pose_from_correspondences(points1, points2, y_offset, x_offset, img_uv, cam_K, self.norm_factors[str(obj_id)], scale_factor=1)
+                R_est, t_est = utils.get_pose_from_correspondences(points1, points2, 
+                                                                   y_offset, x_offset, 
+                                                                   img_uv, cam_K, 
+                                                                   self.norm_factors[str(obj_id)], 
+                                                                   scale_factor=1.0, 
+                                                                   resize_factor=resize_factor)
                 
                 return R_est, t_est
         except Exception as e:
