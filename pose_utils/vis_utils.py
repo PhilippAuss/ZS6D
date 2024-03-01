@@ -104,12 +104,12 @@ def draw_3D_bbox_on_image(image, R, t, cam_K, model_info:dict, image_shape=(480,
     return image_raw
 
 
-def create_debug_image(R_est, t_est, R_gt, t_gt, img, cam_K, model_info, factor, image_shape = (480,640)):
+def create_debug_image(R_est, t_est, R_gt, t_gt, img, cam_K, model_info, factor, image_shape = (480,640), colEst = (255,0,0)):
     dbg_img = copy.deepcopy(img)
 
-    dbg_img = draw_3D_bbox_on_image(dbg_img, R_gt, t_gt, cam_K, model_info, factor=factor, image_shape=image_shape, colEst=(255,0,0))
+    dbg_img = draw_3D_bbox_on_image(dbg_img, R_gt, t_gt, cam_K, model_info, factor=factor, image_shape=image_shape, colEst=(0,0,255))
 
-    dbg_img = draw_3D_bbox_on_image(dbg_img, R_est, t_est, cam_K, model_info, factor=factor, image_shape=image_shape, colEst=(0,0,255))
+    dbg_img = draw_3D_bbox_on_image(dbg_img, R_est, t_est, cam_K, model_info, factor=factor, image_shape=image_shape, colEst=colEst)
 
     return dbg_img
 

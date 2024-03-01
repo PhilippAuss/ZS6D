@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Test pose estimation inference on test set')
-    parser.add_argument('--config_file', default="./zs6d_configs/bop_eval_configs/cfg_ycbv_inference_bop.json")
+    parser.add_argument('--config_file', default="./zs6d_configs/bop_eval_configs/cfg_lmo_inference_bop.json")
 
     args = parser.parse_args()
 
@@ -258,7 +258,8 @@ if __name__=="__main__":
                                                         img_data.cam_K, 
                                                         img_data.model_infos[i],
                                                         config['scale_factor'],
-                                                        image_shape = (config['image_resolution'][0],config['image_resolution'][1]))
+                                                        image_shape = (config['image_resolution'][0],config['image_resolution'][1]),
+                                                        colEst=(0,255,0))
                     
                     dbg_img = cv2.cvtColor(dbg_img, cv2.COLOR_BGR2RGB)
                     

@@ -11,6 +11,37 @@ We demonstrate the effectiveness of deep features extracted from self-supervised
 Note that this repo only deals with 6D pose estimation, you need segmentation masks as input. These can be obtained with supervised trained methods or zero-shot methods. For zero-shot we refer to [cnos](https://github.com/nv-nguyen/cnos).
 
 ## Installation:
+To setup the environment to run the code locally follow these steps:
+
+```
+conda env create -f environment.yml
+conda activate zs6d
+```
+
+Otherwise, run the following commands:
+
+```
+conda create --name zs6d python=3.9
+conda install pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.7 -c pytorch -c nvidia
+pip install tqdm==4.65.0
+pip install timm==0.9.16
+pip install matplotlib==3.8.3
+pip install scikit-learn==1.4.1.post1
+pip install opencv-python==4.9.0
+pip install git+https://github.com/lucasb-eyer/pydensecrf.git@dd070546eda51e21ab772ee6f14807c7f5b1548b
+pip install transforms3d==0.4.1
+pip install pillow==9.4.0
+pip install plyfile==1.0.3
+pip install trimesh==4.1.4
+pip install imageio==2.34.0
+pip install pypng==0.20220715.0
+pip install vispy==0.12.2
+pip install pyopengl==3.1.1a1
+pip install pyglet==1.2.4
+pip install numba==0.59.0
+pip install jupyter==1.0.0
+```
+
 
 ### Docker setup:
 
