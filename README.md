@@ -37,7 +37,7 @@ pip install imageio==2.34.0
 pip install pypng==0.20220715.0
 pip install vispy==0.12.2
 pip install pyopengl==3.1.1a1
-pip install pyglet==1.2.4
+pip install pyglet==2.0.10
 pip install numba==0.59.0
 pip install jupyter==1.0.0
 ```
