@@ -7,6 +7,6 @@
   "results_file": "results_tless_bop_sam_1templates_green.csv",
   "norm_factor_path":"./templates/tless_desc/models_xyz/norm_factor.json",
   "num_matched_templates":1,
-  "image_resolution":[540, 720],
+  "image_resolution":[720, 540],
   "debug_imgs": 1 
 }
