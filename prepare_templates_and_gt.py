@@ -126,8 +126,7 @@ if __name__=="__main__":
                         sym_continues[:3] = model_info['symmetries_continuous'][0]['axis']
                         sym_continues[3:] = model_info['symmetries_continuous'][0]['offset']
                     
-                    rot_pose, rotation_lock = get_sympose(R, sym_continues) 
-                    import matplotlib.pyplot as plt                   
+                    rot_pose, rotation_lock = get_sympose(R, sym_continues)                 
                     
                     img_uv, depth_rend, bbox_template = get_rendering(obj_model, rot_pose, t/1000., ren)
 
