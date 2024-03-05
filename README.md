@@ -22,6 +22,7 @@ Otherwise, run the following commands:
 
 ```
 conda create --name zs6d python=3.9
+conda activate zs6d
 conda install pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.7 -c pytorch -c nvidia
 pip install tqdm==4.65.0
 pip install timm==0.9.16
