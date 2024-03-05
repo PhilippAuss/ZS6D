@@ -92,10 +92,14 @@ class ZS6D:
                 img_uv = np.load(f"{self.templates_gt[obj_id][matched_templates[0][1]]['img_crop'].split('.png')[0]}_uv.npy")
                 img_uv = img_uv.astype(np.uint8)
                 img_uv = cv2.resize(img_uv, (crop_size, crop_size))
-
-                R_est, t_est = utils.get_pose_from_correspondences(points1, points2, y_offset, x_offset, img_uv, cam_K, self.norm_factors[str(obj_id)],
-                                                                   scale_factor=1, resize_factor=resize_factor)
-
+                
+                R_est, t_est = utils.get_pose_from_correspondences(points1, points2, 
+                                                                   y_offset, x_offset, 
+                                                                   img_uv, cam_K, 
+                                                                   self.norm_factors[str(obj_id)], 
+                                                                   scale_factor=1.0, 
+                                                                   resize_factor=resize_factor)
+                
                 return R_est, t_est
         except Exception as e:
             self.logger.error(f"Error in get_pose: {e}")

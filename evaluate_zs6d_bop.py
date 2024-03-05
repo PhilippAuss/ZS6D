@@ -258,7 +258,8 @@ if __name__=="__main__":
                                                         img_data.cam_K, 
                                                         img_data.model_infos[i],
                                                         config['scale_factor'],
-                                                        image_shape = (config['image_resolution'][0],config['image_resolution'][1]))
+                                                        image_shape = (config['image_resolution'][0],config['image_resolution'][1]),
+                                                        colEst=(0,255,0))
                     
                     dbg_img = cv2.cvtColor(dbg_img, cv2.COLOR_BGR2RGB)
                     

@@ -17,7 +17,7 @@ from rendering.utils import get_rendering, get_sympose
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Test pose estimation inference on test set')
-    parser.add_argument('--config_file', default="./zs6d_configs/template_gt_preparation_configs/cfg_template_gt_generation_ycbv.json")
+    parser.add_argument('--config_file', default="./zs6d_configs/template_gt_preparation_configs/cfg_template_gt_generation_tless.json")
 
     args = parser.parse_args()
 
@@ -117,7 +117,6 @@ if __name__=="__main__":
                     desc = extractor.extract_descriptors(img_prep.to(device), layer=11, facet='key', bin=False, include_cls=True)
                     desc = desc.squeeze(0).squeeze(0).detach().cpu().numpy()
 
-                    # R = obj_poses[i].T[:3,:3].T
                     R = obj_poses[i][:3,:3]
                     t = obj_poses[i].T[-1,:3]
                     sym_continues = [0,0,0,0,0,0]
@@ -126,10 +125,10 @@ if __name__=="__main__":
                     if('symmetries_continuous' in keys):
                         sym_continues[:3] = model_info['symmetries_continuous'][0]['axis']
                         sym_continues[3:] = model_info['symmetries_continuous'][0]['offset']
-
-                    rot_pose, rotation_lock = get_sympose(R, sym_continues)
-
-                    img_uv, depth_rend, bbox_template = get_rendering(obj_model, rot_pose, t, ren)
+                    
+                    rot_pose, rotation_lock = get_sympose(R, sym_continues)                 
+                    
+                    img_uv, depth_rend, bbox_template = get_rendering(obj_model, rot_pose, t/1000., ren)
 
                     img_uv = img_uv.astype(np.uint8)
 
