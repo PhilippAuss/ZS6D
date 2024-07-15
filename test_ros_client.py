@@ -30,14 +30,16 @@ def rle_to_ros_image(mask):
 
 
 if __name__ == "__main__":
+    idx = 0
     rospy.init_node('dummy_client')
 
     with open("gts/test_gts/ycbv_bop_test_gt_sam.json") as fp:
         gts = json.load(fp)
 
     img_gt = gts["000048_1"]
-    rgb = cv2.imread("./test/000001.png")[...,::-1]
-    cam_K = np.array(img_gt[0]['cam_K']).reshape((3,3))
+    img_gt = gts["000052_543"]
+    rgb = cv2.imread("./test/000543.png")[...,::-1]
+    cam_K = np.array(img_gt[idx]['cam_K']).reshape((3,3))
 
     plt.imshow(rgb)
     plt.savefig("ros_input.png")
@@ -48,9 +50,9 @@ if __name__ == "__main__":
 
     # Create action goal
     goal = GenericImgProcAnnotatorGoal()
-    goal.mask_detections = [rle_to_ros_image(img_gt[0]['mask_sam'])]
+    goal.mask_detections = [rle_to_ros_image(img_gt[idx]['mask_sam'])]
 
-    goal.class_names = [str(img_gt[0]['obj_id'])]
+    goal.class_names = [str(img_gt[idx]['obj_id'])]
     goal.rgb = ros_numpy.msgify(Image, rgb, encoding='8UC3')
     goal.rgb.is_bigendian = 1 if goal.rgb.is_bigendian else 0
     # goal.depth =
@@ -64,16 +66,16 @@ if __name__ == "__main__":
         np.array(rgb),
         tf3d.quaternions.quat2mat(
             ros_numpy.numpify(result.pose_results[0].orientation)),
-        ros_numpy.numpify(result.pose_results[0].position),
+        ros_numpy.numpify(result.pose_results[0].position)*1000,
         cam_K,
-        img_gt[0]['model_info'],
+        img_gt[idx]['model_info'],
         factor=1.0)
 
     plt.imshow(out_img); plt.savefig("debug_imgs/ros_result.png")
 
     print(f"Results:\n===")
     print("Pred:", result.pose_results[0].position)
-    print("GT:  ", img_gt[0]['cam_t_m2c'])
+    print("GT:  ", np.array(img_gt[idx]['cam_t_m2c'])/1000)
 
     print("Pred:", result.pose_results[0].orientation)
-    print("GT:  ", img_gt[0]['cam_R_m2c'])
+    print("GT:  ", tf3d.quaternions.mat2quat(np.array(img_gt[idx]['cam_R_m2c'])))

@@ -1,5 +1,4 @@
 # ZS6D
-
 <img src="./assets/overview.png" width="500" alt="teaser"/>
 
 We demonstrate the effectiveness of deep features extracted from self-supervised, pre-trained Vision Transformer (ViT) for Zero-shot 6D pose estimation. For more detailed information check out the corresponding [[paper](https://arxiv.org/pdf/2309.11986.pdf)].
@@ -47,6 +46,42 @@ pip install jupyter==1.0.0
 ### Docker setup:
 
 ### ROS integration:
+To run the ros wrapper do the following:
+
+- set up the NVIDIA container toolkit
+- download ycbv templates from [this link](https://drive.google.com/file/d/1t0nk_1R931LYl-F9nrYLfk-jKxoki-0A/view?usp=sharing) and put the ycbv folder into ./templates
+- edit camera intrinsics and obj name mappings in ```zs6d_configs/bop_eval_configs/cfg_ros_ycbv_inference_bop.json```. The keys in the object name mapping are the names that are passed to the pose estimator and the values are the bop object ids (as strings).
+- Set the ROS_IP and ROS_MASTER_URI in ```ros_entrypoint.sh```.
+- update the submodules with ```git submodule update --init --recursive```
+- Build the docker image with ```docker build -t zs6d .```
+- Allow the docker container to access the display by running ```xhost local:docker```.
+- Run the docker container with the following command:
+
+```bash
+docker run -it --rm --runtime nvidia --privileged -e DISPLAY=${DISPLAY}  -e NVIDIA_DRIVER_CAPABILITIES=all -v /PATH_TO_REPOSITORY:/code -v /PATH_TO_REPOSITORY/torch_cache:/root/.cache/torch -v /tmp/.X11-unix:/tmp/.X11-unix torch --net host zs6d /bin/bash
+```
+Once you are inside the docker container, run the following command to check if the docker container has access to the GPU:
+
+```bash
+glxinfo | grep "OpenGL version string"
+```
+The output should be ```OpenGL version string: > 2.xx``` and show the nvidia driver version.
+
+Afterwards, run the following command to calculate the descriptors for the templates and prepare the ground truth:
+```bash
+python prepare_templates_and_gt.py
+```
+
+**All of the previous step only have to be done once per machine.**
+
+
+
+The following commands have to be run **every time** you want to start the ros container:
+
+```bash
+xhost local:docker
+docker run -it --rm --runtime nvidia --privileged -e DISPLAY=${DISPLAY}  -e NVIDIA_DRIVER_CAPABILITIES=all -v /PATH_TO_REPOSITORY:/code -v /PATH_TO_REPOSITORY/torch_cache:/root/.cache/torch -v /tmp/.X11-unix:/tmp/.X11-unix torch --net host zs6d
+```
 
 ## Template rendering:
 To generate templates from a object model to perform inference, we refer to the [ZS6D_template_rendering](https://github.com/haberger/ZS6D_template_rendering) repository.

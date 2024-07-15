@@ -96,7 +96,7 @@ if __name__=="__main__":
 
                 files = os.listdir(path_template_folder)
                 filtered_files = list(filter(lambda x: not x.startswith('mask_'), files))
-                filtered_files.sort(key=lambda x: os.path.getmtime(os.path.join(path_template_folder,x)))
+                filtered_files = sorted(filtered_files)
 
                 tmp_list = []
 
@@ -105,8 +105,7 @@ if __name__=="__main__":
                     # Preparing mask and bounding box [x,y,w,h]
                     mask_path = os.path.join(path_template_folder, f"mask_{file}")
                     mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
-                    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                    x, y, w, h = cv2.boundingRect(contours[0])
+                    x, y, w, h = cv2.boundingRect(mask)
                     crop_size = max(w,h)
 
                     # Preparing cropped image and desc

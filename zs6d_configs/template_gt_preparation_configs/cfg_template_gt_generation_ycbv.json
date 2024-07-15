@@ -9,6 +9,6 @@
            0.0, 1067.487, 241.3109,
            0.0, 0.0, 1.0],
  "template_resolution": [640, 480],
- "output_template_gt_file":"./templates/ycbv_desc/ycbv_template_gt.json"
+ "output_template_gt_file":"./gts/template_gts/ycbv_template_gt.json"
 
 }

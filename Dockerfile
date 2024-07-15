@@ -131,6 +131,10 @@ RUN python3 -m pip install \
 RUN python3 -m pip install \
     git+https://github.com/qboticslabs/ros_numpy.git
 
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    mesa-utils
+
 WORKDIR /code
 
 COPY ros_entrypoint.sh /

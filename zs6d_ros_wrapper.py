@@ -21,16 +21,17 @@ import pose_utils.vis_utils as vis_utils
 
 class ZS6D_ROS:
     def __init__(self, config_file):
+            print(f"Using config file: {config_file}")
             with open(os.path.join(config_file), 'r') as f:
                 config = json.load(f)
 
             self.object_name_mapping = config["object_mapping"]
             self.intrinsics = np.asarray(
-                 rospy.get_param(
-                 '/pose_estimator/intrinsics',
-                 config['cam_K'])
+                 config['cam_K']
                 ).reshape((3,3))
+            print(f"Using intrinsics: {self.intrinsics}")
 
+            rospy.loginfo("Initializing zs6d")
             self.zs6d_predictor = ZS6D(
                 os.path.join(config['templates_gt_path']),
                 os.path.join(config['norm_factor_path']),
@@ -40,7 +41,7 @@ class ZS6D_ROS:
                 max_crop_size=80)
 
             rospy.init_node("zs6d_estimation")
-            self.server = actionlib.SimpleActionServer('/pose_estimator/get_poses',
+            self.server = actionlib.SimpleActionServer('/pose_estimator/zs6d',
                                                         GenericImgProcAnnotatorAction,
                                                         execute_cb=self.estimate_pose,
                                                         auto_start=False)
@@ -74,8 +75,11 @@ class ZS6D_ROS:
              rospy.logwarn("Missing depth image in the goal.")
 
         print("RGB", image.shape, image.dtype)
+
+
         mask_detections = [ros_numpy.numpify(mask_img).astype(np.uint8)
                             for mask_img in req.mask_detections]
+
         print("mask", mask_detections[0].shape, mask_detections[0].dtype)
 
 
@@ -91,9 +95,10 @@ class ZS6D_ROS:
 
             quat = tf3d.quaternions.mat2quat(R_est)
             pose = Pose()
-            pose.position.x = t_est[0]
-            pose.position.y = t_est[1]
-            pose.position.z = t_est[2]
+            t_est_meter = t_est/1000
+            pose.position.x = t_est_meter[0]
+            pose.position.y = t_est_meter[1]
+            pose.position.z = t_est_meter[2]
             pose.orientation.w = quat[0]
             pose.orientation.x = quat[1]
             pose.orientation.y = quat[2]
@@ -113,7 +118,7 @@ class ZS6D_ROS:
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config_file', default="./zs6d_configs/bop_eval_configs/cfg_ycbv_inference_bop.json")
+    parser.add_argument('--config_file', default="./zs6d_configs/bop_eval_configs/cfg_ros_ycbv_inference_bop.json")
     opt = parser.parse_args()
     return opt
 
