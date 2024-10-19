@@ -145,10 +145,12 @@ This project is built upon [dino-vit-features](https://github.com/ShirAmir/dino-
 If you found this repository useful please consider starring ⭐ and citing :
 
 ```
-@article{ausserlechner2023zs6d,
-  title={ZS6D: Zero-shot 6D Object Pose Estimation using Vision Transformers},
+@inproceedings{ausserlechner2024zs6d,
+  title={Zs6d: Zero-shot 6d object pose estimation using vision transformers},
   author={Ausserlechner, Philipp and Haberger, David and Thalhammer, Stefan and Weibel, Jean-Baptiste and Vincze, Markus},
-  journal={arXiv preprint arXiv:2309.11986},
-  year={2023}
+  booktitle={2024 IEEE International Conference on Robotics and Automation (ICRA)},
+  pages={463--469},
+  year={2024},
+  organization={IEEE}
 }
 ```
