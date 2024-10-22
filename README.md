@@ -15,6 +15,7 @@ To setup the environment to run the code locally follow these steps:
 ```
 conda env create -f environment.yml
 conda activate zs6d
+git submodule update --init --recursive
 ```
 
 Otherwise, run the following commands:
@@ -40,6 +41,7 @@ pip install pyopengl==3.1.1a1
 pip install pyglet==2.0.10
 pip install numba==0.59.0
 pip install jupyter==1.0.0
+git submodule update --init --recursive
 ```
 
 
