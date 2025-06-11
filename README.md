@@ -156,3 +156,8 @@ If you found this repository useful please consider starring ⭐ and citing :
   organization={IEEE}
 }
 ```
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).  
+Copyright © 2025 Philipp Ausserlechner
